@@ -20,8 +20,6 @@ html,body{width:100%;height:100%;background:#fff;overflow:hidden;}
 #intervalSelect:hover,#intervalSelect:focus{border-color:#5d6a9a;}
 #candleCountSelect{padding:4px 26px 4px 9px;border-radius:4px;border:1px solid #b7bfd0;background:#f7f9fc;color:var(--text);font-size:12px;font-family:monospace;cursor:pointer;outline:none;}
 #candleCountSelect:hover,#candleCountSelect:focus{border-color:#5d6a9a;}
-#ichiToggleLabel{display:flex;align-items:center;gap:5px;padding:3px 8px;border:1px solid var(--border);border-radius:4px;background:#f7f9fc;color:var(--text);font-size:11px;font-family:monospace;cursor:pointer;white-space:nowrap;}
-#ichiToggle{width:14px;height:14px;accent-color:#26a69a;cursor:pointer;}
 #fractalsToggleLabel{display:flex;align-items:center;gap:5px;padding:3px 8px;border:1px solid var(--border);border-radius:4px;background:#f2fbfa;color:var(--text);font-size:11px;font-family:monospace;cursor:pointer;white-space:nowrap;}
 #fractalsToggle{width:14px;height:14px;accent-color:#009688;cursor:pointer;}
 #fractalsToggleLabel.active{border-color:#009688;background:#e4f7f4;}
@@ -110,6 +108,35 @@ html,body{width:100%;height:100%;background:#fff;overflow:hidden;}
   .intensityRow{grid-template-columns:38px 1fr 92px;gap:4px;}
   #footer{padding:3px 8px;font-size:9px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 }
+
+/* iPhone 15 Pro landscape (852 x 393) */
+@media (orientation:landscape) and (max-width:900px) and (max-height:500px){
+  html,body{height:100%;height:100dvh;overscroll-behavior:none;}
+  #wrap{height:100%;height:100dvh;padding-top:env(safe-area-inset-top);padding-right:env(safe-area-inset-right);padding-bottom:env(safe-area-inset-bottom);padding-left:env(safe-area-inset-left);}
+  #header{display:block;padding:4px 7px;overflow:hidden;}
+  #hleft{display:grid;grid-template-columns:minmax(300px,40%) minmax(0,1fr);grid-template-rows:33px 27px;align-items:center;gap:3px 8px;min-width:0;}
+  #symbolTabs{grid-column:1;grid-row:1;width:100%;gap:4px;overflow-x:auto;flex-wrap:nowrap;scrollbar-width:none;-webkit-overflow-scrolling:touch;}
+  #symbolTabs::-webkit-scrollbar,#controlStrip::-webkit-scrollbar{display:none;}
+  .symBtn{min-height:30px;padding:4px 9px;font-size:11px;flex:0 0 auto;}
+  #controlStrip{grid-column:2;grid-row:1;display:flex;align-items:center;flex-wrap:nowrap;gap:4px;width:100%;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;}
+  #controlStrip>*{flex:0 0 auto;min-height:29px;}
+  #controlStrip label{padding:4px 7px;}
+  #infoRow{grid-column:1 / 3;grid-row:2;display:flex;align-items:center;gap:8px;min-width:0;flex-wrap:nowrap;}
+  #priceBlock{gap:5px;min-width:0;}
+  #symLabel{font-size:11px;}
+  #price{font-size:17px;}
+  #change{font-size:11px;}
+  #stats{display:none;}
+  #receiveStatus{padding:2px 6px;font-size:9px;gap:4px;}
+  #hright{display:none;}
+  #pVol{height:40px;}
+  #pRsi{height:52px;}
+  #pMacd{height:57px;}
+  .plabel{top:2px;left:5px;font-size:8px;}
+  #tooltip{top:4px;left:4px;max-width:300px;padding:4px 6px;font-size:9px;line-height:1.4;}
+  #intensityPopup{left:4px;bottom:4px;width:300px;padding:5px;}
+  #footer{display:none;}
+}
 </style>
 </head>
 <body>
@@ -140,7 +167,6 @@ html,body{width:100%;height:100%;background:#fff;overflow:hidden;}
         <option value="200">200개 봉</option>
         <option value="300">300개 봉</option>
       </select>
-      <label id="ichiToggleLabel"><input id="ichiToggle" type="checkbox">일목균형표 적용</label>
       <label id="fractalsToggleLabel" class="active" title="Williams Fractals · Periods 2"><input id="fractalsToggle" type="checkbox" checked>Williams Fractals</label>
       <label id="orderBlockToggleLabel" class="active" title="Volumized Order Blocks · Swing Length 10"><input id="orderBlockToggle" type="checkbox" checked>Order Block</label>
       <label id="intensityToggleLabel"><input id="intensityToggle" type="checkbox">매수·매도 강도</label>
@@ -175,10 +201,6 @@ html,body{width:100%;height:100%;background:#fff;overflow:hidden;}
         <div class="leg"><div class="ll" style="height:3px;background:#f6c90e;"></div>MA10</div>
         <div class="leg"><div class="ll" style="height:3px;background:#4fc3f7;"></div>MA20</div>
         <div class="leg"><div class="ll" style="height:3.5px;background:#ce93d8;"></div>MA50</div>
-        <div class="leg ichiLeg"><div class="ll" style="height:2px;background:#ef9a9a;"></div>전환</div>
-        <div class="leg ichiLeg"><div class="ll" style="height:2px;background:#80cbc4;"></div>기준</div>
-        <div class="leg ichiLeg"><div style="width:11px;height:8px;background:rgba(38,166,154,0.22);border:.5px solid rgba(38,166,154,0.5);border-radius:1px;"></div>↑구름</div>
-        <div class="leg ichiLeg"><div style="width:11px;height:8px;background:rgba(239,83,80,0.22);border:.5px solid rgba(239,83,80,0.5);border-radius:1px;"></div>↓구름</div>
       </div>
       <button id="dlBtn" onclick="downloadSnapshot()">📷 스냅샷 저장</button>
     </div>
@@ -197,7 +219,7 @@ html,body{width:100%;height:100%;background:#fff;overflow:hidden;}
     <div class="panel" id="pRsi"><canvas id="cvRsi"></canvas><div class="plabel" id="rsiLabel">RSI(14)</div></div>
     <div class="panel" id="pMacd"><canvas id="cvMacd"></canvas><div class="plabel" id="macdLabel">MACD(12,26,9)</div></div>
   </div>
-  <div id="footer"><span id="dot"></span>실시간 · Binance · 일목균형표(9,26,52) + MA(10,20,50) + RSI(14,50기준색) + MACD(12,26,9,크로스색)</div>
+  <div id="footer"><span id="dot"></span>실시간 · Binance · MA(10,20,50) + RSI(14,50기준색) + MACD(12,26,9,크로스색)</div>
 </div>
 <script>
 const UP='#26a69a',DN='#ef5350';
@@ -206,12 +228,10 @@ const MACD_GOLD='#26a69a',MACD_DEAD='#ef5350';
 const MA_C={10:'#f6c90e',20:'#4fc3f7',50:'#ce93d8'};
 const MA_W={10:2.5,20:3,50:3.5};
 const MA_P=[10,20,50];
-const T_P=9,K_P=26,SB_P=52,DISP=26;
 const BG='#ffffff',GRID='rgba(32,37,54,0.09)',TEXT='rgba(54,63,83,0.68)';
 let candles=[],ws=null,curSym='BTCUSDT',curDp=0;
 let curInterval='1h';
 const INTERVAL_LABELS={'1m':'1분봉','5m':'5분봉','30m':'30분봉','1h':'1시간봉','4h':'4시간봉','1d':'일봉','1w':'주봉'};
-let showIchimoku=false;
 let showFractals=true;
 const FRACTAL_PERIODS=2;
 let showOrderBlocks=true;
@@ -233,7 +253,8 @@ let chartStateMessage='차트 데이터를 불러오는 중…';
 let candleRetryTimer=null;
 let mX=-1,mY=-1,hover=false;
 let VISIBLE=100;
-const PAD_L=8,PAD_R=132,PAD_T=18,PAD_B=27;
+const PAD_L=8,PAD_R=68,PAD_T=18,PAD_B=27;
+const RIGHT_GAP_SLOTS=2;
 
 const cvs={main:document.getElementById('cvMain'),vol:document.getElementById('cvVol'),rsi:document.getElementById('cvRsi'),macd:document.getElementById('cvMacd')};
 const ctxs={};Object.keys(cvs).forEach(k=>{ctxs[k]=cvs[k].getContext('2d');});
@@ -288,14 +309,6 @@ function fmtVol(n){if(n>=1e9)return(n/1e9).toFixed(2)+'B';if(n>=1e6)return(n/1e6
 function fmtDate(ts){const d=new Date(ts);return(d.getMonth()+1)+'/'+d.getDate()+' '+String(d.getHours()).padStart(2,'0')+':00';}
 function fmtDateFile(ts){const d=new Date(ts);return d.getFullYear()+('0'+(d.getMonth()+1)).slice(-2)+('0'+d.getDate()).slice(-2)+'_'+('0'+d.getHours()).slice(-2)+('0'+d.getMinutes()).slice(-2);}
 
-function hl2(arr,i,p){if(i<p-1)return null;let hi=-Infinity,lo=Infinity;for(let j=i-p+1;j<=i;j++){hi=Math.max(hi,arr[j].high);lo=Math.min(lo,arr[j].low);}return(hi+lo)/2;}
-function calcIchimoku(data){
-  const n=data.length,tenkan=[],kijun=[],senkouA=[],senkouB=[],chikou=[];
-  for(let i=0;i<n;i++){tenkan.push(hl2(data,i,T_P));kijun.push(hl2(data,i,K_P));}
-  for(let i=0;i<n+DISP;i++){const si=i-DISP;senkouA.push(si>=0&&tenkan[si]!=null&&kijun[si]!=null?(tenkan[si]+kijun[si])/2:null);senkouB.push(si>=0?hl2(data,si,SB_P):null);}
-  for(let i=0;i<n;i++)chikou.push(i+DISP<n?data[i].close:null);
-  return{tenkan,kijun,senkouA,senkouB,chikou};
-}
 function calcMA(data,p){return data.map((_,i)=>i<p-1?null:data.slice(i-p+1,i+1).reduce((a,c)=>a+c.close,0)/p);}
 function calcRSI(data,period=14){
   const closes=data.map(c=>c.close),rsi=new Array(closes.length).fill(null);
@@ -397,7 +410,8 @@ function getLatestStrategySignal(data){
   const result=calcMacdRsiStrategy(data),signals=[];
   result.entries.forEach(entry=>signals.push({index:entry.index,kind:entry.type==='long'?'매수':'매도',price:data[entry.index].close}));
   result.trades.forEach(trade=>signals.push({index:trade.exitIndex,kind:'청산',price:trade.exitPrice,position:trade.type,rate:trade.rate}));
-  return signals.sort((a,b)=>a.index-b.index).at(-1)||null;
+  const sortedSignals=signals.sort((a,b)=>a.index-b.index);
+  return sortedSignals[sortedSignals.length-1]||null;
 }
 
 async function sendKakaoSignalAlert(signal){
@@ -424,15 +438,15 @@ function getLayout(el){
   const W=el.clientWidth,H=el.clientHeight;
   const chartW=W-PAD_L-PAD_R,chartH=H-PAD_T-PAD_B;
   const n=candles.length,startIdx=Math.max(0,n-VISIBLE);
-  const visN=n-startIdx,totalSlots=visN+DISP;
+  const visN=n-startIdx,totalSlots=visN+RIGHT_GAP_SLOTS;
   const cw=Math.max(2,Math.floor(chartW/totalSlots)-1);
   const gap=(chartW-cw*totalSlots)/(totalSlots-1||1);
   const xOf=i=>PAD_L+(i-startIdx)*(cw+gap)+cw/2;
   return{W,H,chartW,chartH,n,startIdx,visN,totalSlots,cw,gap,xOf};
 }
-function drawCrossV(ctx,snapX,H){
+function drawCrossV(ctx,snapX,H,bottomPad=PAD_B){
   ctx.save();ctx.strokeStyle='rgba(0,0,0,0.75)';ctx.lineWidth=1;ctx.setLineDash([5,4]);
-  ctx.beginPath();ctx.moveTo(snapX,PAD_T);ctx.lineTo(snapX,H-PAD_B);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(snapX,PAD_T);ctx.lineTo(snapX,H-bottomPad);ctx.stroke();
   ctx.setLineDash([]);ctx.restore();
 }
 
@@ -554,15 +568,10 @@ function drawMain(){
     ctx.fillText(chartStateMessage,W/2,H/2);
     return;
   }
-  const ichi=calcIchimoku(candles);
   const maLines={};MA_P.forEach(p=>{maLines[p]=calcMA(candles,p);});
   const visCan=candles.slice(startIdx);
   let hi=-Infinity,lo=Infinity;
   visCan.forEach(c=>{hi=Math.max(hi,c.high);lo=Math.min(lo,c.low);});
-  if(showIchimoku){
-    for(let i=startIdx;i<n+DISP;i++){const sa=ichi.senkouA[i],sb=ichi.senkouB[i];if(sa!=null){hi=Math.max(hi,sa);lo=Math.min(lo,sa);}if(sb!=null){hi=Math.max(hi,sb);lo=Math.min(lo,sb);}}
-    for(let i=startIdx;i<n;i++){const t=ichi.tenkan[i],k=ichi.kijun[i],ch=ichi.chikou[i];if(t!=null){hi=Math.max(hi,t);lo=Math.min(lo,t);}if(k!=null){hi=Math.max(hi,k);lo=Math.min(lo,k);}if(ch!=null){hi=Math.max(hi,ch);lo=Math.min(lo,ch);}}
-  }
   MA_P.forEach(p=>{maLines[p].slice(startIdx).forEach(v=>{if(v!=null){hi=Math.max(hi,v);lo=Math.min(lo,v);}});});
   const rng=hi-lo||1,hiP=hi+rng*0.06,loP=lo-rng*0.06,prng=hiP-loP;
   const yOf=v=>PAD_T+chartH*(1-(v-loP)/prng);
@@ -602,28 +611,10 @@ function drawMain(){
   }
   if(showOrderBlocks)drawOrderBlocks(ctx,calcOrderBlocks(candles,OB_SWING_LENGTH),{W,startIdx,n,xOf},yOf);
   if(showOrderBlocks&&curInterval==='1h'&&orderBlock30mCandles.length)drawOrderBlocks(ctx,calcOrderBlocks(orderBlock30mCandles,OB_SWING_LENGTH),{W,startIdx,n,xOf},yOf,'30분봉',true);
-  if(showIchimoku)for(let i=startIdx;i<n+DISP-1;i++){
-    const sa0=ichi.senkouA[i],sa1=ichi.senkouA[i+1],sb0=ichi.senkouB[i],sb1=ichi.senkouB[i+1];
-    if(sa0==null||sa1==null||sb0==null||sb1==null)continue;
-    const x0=xOf(i)-cw/2,x1=xOf(i+1)+cw/2,isUp=((sa0+sa1)/2>=(sb0+sb1)/2);
-    ctx.beginPath();ctx.moveTo(x0,yOf(sa0));ctx.lineTo(x1,yOf(sa1));ctx.lineTo(x1,yOf(sb1));ctx.lineTo(x0,yOf(sb0));ctx.closePath();
-    ctx.fillStyle=isUp?'rgba(38,166,154,0.18)':'rgba(239,83,80,0.18)';ctx.fill();
-    ctx.strokeStyle=isUp?'rgba(38,166,154,0.4)':'rgba(239,83,80,0.4)';ctx.lineWidth=.5;ctx.setLineDash([]);ctx.stroke();
-  }
   MA_P.forEach(p=>{
     const vals=maLines[p];ctx.beginPath();ctx.strokeStyle=MA_C[p];ctx.lineWidth=MA_W[p];ctx.lineJoin='round';ctx.setLineDash([]);
     let s=false;for(let i=startIdx;i<n;i++){const v=vals[i];if(v==null)continue;if(!s){ctx.moveTo(xOf(i),yOf(v));s=true;}else ctx.lineTo(xOf(i),yOf(v));}ctx.stroke();
   });
-  if(showIchimoku)[[ichi.tenkan,'#ef9a9a',1.2],[ichi.kijun,'#80cbc4',1.6]].forEach(([arr,col,lw])=>{
-    ctx.beginPath();ctx.strokeStyle=col;ctx.lineWidth=lw;ctx.lineJoin='round';ctx.setLineDash([]);
-    let s=false;for(let i=startIdx;i<n;i++){const v=arr[i];if(v==null)continue;if(!s){ctx.moveTo(xOf(i),yOf(v));s=true;}else ctx.lineTo(xOf(i),yOf(v));}ctx.stroke();
-  });
-  if(showIchimoku){
-    ctx.beginPath();ctx.strokeStyle='rgba(255,204,128,0.7)';ctx.lineWidth=1;ctx.lineJoin='round';ctx.setLineDash([4,3]);
-    let s=false;
-    for(let i=startIdx;i<n;i++){const v=ichi.chikou[i];if(v==null)continue;const pi=i-DISP;if(pi<startIdx)continue;if(!s){ctx.moveTo(xOf(pi),yOf(v));s=true;}else ctx.lineTo(xOf(pi),yOf(v));}
-    ctx.stroke();ctx.setLineDash([]);
-  }
   visCan.forEach((c,ri)=>{
     const isUp=c.close>=c.open,col=isUp?UP:DN;
     const x=PAD_L+ri*(cw+gap),cx=x+cw/2;
@@ -692,12 +683,13 @@ function drawMain(){
     ctx.beginPath();ctx.arc(snapX,Math.max(PAD_T,Math.min(H-PAD_B,mY)),3,0,Math.PI*2);ctx.fillStyle='#000';ctx.fill();
     ctx.restore();
   }
-  cvs.main._layout={W,H,startIdx,visN,cw,gap,xOf,n,ichi,maLines,vOfY};
+  cvs.main._layout={W,H,startIdx,visN,cw,gap,xOf,n,maLines,vOfY};
 }
 
 function drawVol(){
   const cv=cvs.vol,ctx=ctxs.vol;
-  const{W,H,chartH,n,startIdx,visN,cw,gap}=getLayout(cv);
+  const{W,H,n,startIdx,visN,cw,gap}=getLayout(cv);
+  const chartH=H-PAD_T;
   ctx.clearRect(0,0,W,H);ctx.fillStyle=BG;ctx.fillRect(0,0,W,H);
   if(!n)return;
   const visCan=candles.slice(startIdx);
@@ -710,13 +702,14 @@ function drawVol(){
   ctx.fillStyle=TEXT;ctx.font='11px monospace';ctx.textAlign='left';ctx.fillText(fmtVol(maxV),W-PAD_R+8,PAD_T+11);
   if(hover&&mX>=PAD_L&&mX<=W-PAD_R){
     const ri=Math.max(0,Math.min(visN-1,Math.round((mX-PAD_L)/(cw+gap))));
-    drawCrossV(ctx,PAD_L+ri*(cw+gap)+cw/2,H);
+    drawCrossV(ctx,PAD_L+ri*(cw+gap)+cw/2,H,0);
   }
 }
 
 function drawRsi(){
   const cv=cvs.rsi,ctx=ctxs.rsi;
-  const{W,H,chartH,n,startIdx,visN,cw,gap,xOf}=getLayout(cv);
+  const{W,H,n,startIdx,visN,cw,gap,xOf}=getLayout(cv);
+  const chartH=H-PAD_T;
   ctx.clearRect(0,0,W,H);ctx.fillStyle=BG;ctx.fillRect(0,0,W,H);
   if(n<15)return;
   const rsi=calcRSI(candles,14);
@@ -769,7 +762,7 @@ function drawRsi(){
   if(hover&&mX>=PAD_L&&mX<=W-PAD_R){
     const ri=Math.max(0,Math.min(visN-1,Math.round((mX-PAD_L)/(cw+gap))));
     const snapX=PAD_L+ri*(cw+gap)+cw/2;
-    drawCrossV(ctx,snapX,H);
+    drawCrossV(ctx,snapX,H,0);
     const v=rsi[startIdx+ri];
     if(v!=null){ctx.beginPath();ctx.arc(snapX,yRsi(v),3,0,Math.PI*2);ctx.fillStyle=v>=50?RSI_UP:RSI_DN;ctx.fill();}
   }
@@ -778,7 +771,8 @@ function drawRsi(){
 
 function drawMacd(){
   const cv=cvs.macd,ctx=ctxs.macd;
-  const{W,H,chartH,n,startIdx,visN,cw,gap,xOf}=getLayout(cv);
+  const{W,H,n,startIdx,visN,cw,gap,xOf}=getLayout(cv);
+  const chartH=H-PAD_T;
   ctx.clearRect(0,0,W,H);ctx.fillStyle=BG;ctx.fillRect(0,0,W,H);
   if(n<30)return;
   const{macdLine,sigLine,hist}=calcMACD(candles);
@@ -836,7 +830,7 @@ function drawMacd(){
   if(hover&&mX>=PAD_L&&mX<=W-PAD_R){
     const ri=Math.max(0,Math.min(visN-1,Math.round((mX-PAD_L)/(cw+gap))));
     const snapX=PAD_L+ri*(cw+gap)+cw/2;
-    drawCrossV(ctx,snapX,H);
+    drawCrossV(ctx,snapX,H,0);
     const vm=macdLine[startIdx+ri],vs=sigLine[startIdx+ri];
     const cs2=crossState[startIdx+ri],dc=macdLineColor(cs2);
     if(vm!=null){ctx.beginPath();ctx.arc(snapX,yOf(vm),3,0,Math.PI*2);ctx.fillStyle=dc;ctx.fill();}
@@ -852,7 +846,6 @@ function updateTooltip(){
   const ri=Math.max(0,Math.min(L.visN-1,Math.round((mX-PAD_L)/(L.cw+L.gap))));
   const i=L.startIdx+ri;const c=candles[i];if(!c)return;
   const isUp=c.close>=c.open,col=isUp?UP:DN,pct=((c.close-c.open)/c.open*100).toFixed(2);
-  const t=showIchimoku?L.ichi.tenkan[i]:null,k=showIchimoku?L.ichi.kijun[i]:null,sa=showIchimoku?L.ichi.senkouA[i]:null,sb=showIchimoku?L.ichi.senkouB[i]:null;
   const maV=MA_P.map(p=>{const v=L.maLines[p][i];return v!=null?`<span style="color:${MA_C[p]}">MA${p}</span>&nbsp;<b>$${fmt(v,0)}</b>`:null;}).filter(Boolean).join('&nbsp;');
   const rsiArr=cvs.rsi._rsi,rsiV=rsiArr?rsiArr[i]:null;
   const rsiCol=rsiV!=null?(rsiV>=50?RSI_UP:RSI_DN):'#aaa';
@@ -866,8 +859,6 @@ function updateTooltip(){
     `시가&nbsp;<b>$${fmt(c.open)}</b>&nbsp;종가&nbsp;<b style="color:${col}">$${fmt(c.close)}</b><br>`+
     `고가&nbsp;<b>$${fmt(c.high)}</b>&nbsp;저가&nbsp;<b>$${fmt(c.low)}</b><br>`+
     `변동&nbsp;<b style="color:${col}">${isUp?'+':''}${pct}%</b>&nbsp;거래량&nbsp;<b>${fmtVol(c.volume)}</b>`+
-    (t!=null?`<br><span style="color:#ef9a9a">전환</span>&nbsp;<b>$${fmt(t,0)}</b>&nbsp;<span style="color:#80cbc4">기준</span>&nbsp;<b>$${fmt(k,0)}</b>`:'')+
-    (sa!=null?`&nbsp;<span style="color:rgba(38,166,154,.9)">A</span>&nbsp;<b>$${fmt(sa,0)}</b>&nbsp;<span style="color:rgba(239,83,80,.9)">B</span>&nbsp;<b>$${fmt(sb,0)}</b>`:'')+
     (maV?`<br>${maV}`:'')+
     (rsiV!=null?`<br><span style="color:${rsiCol}">RSI</span>&nbsp;<b style="color:${rsiCol}">${rsiV.toFixed(1)}</b>`:'')+
     (mV!=null?`&nbsp;<span style="color:${macdCol}">MACD</span>&nbsp;<b>${mV.toFixed(1)}</b>&nbsp;SIG&nbsp;<b>${sV.toFixed(1)}</b>&nbsp;HIST&nbsp;<b style="color:${hV>=0?UP:DN}">${hV.toFixed(1)}</b>`+
@@ -897,16 +888,6 @@ document.querySelectorAll('.symBtn').forEach(btn=>{
     fetchCandles().then(()=>{drawAll();if(candles.length)connectWS();});
   });
 });
-
-function updateIchimokuUI(){
-  document.querySelectorAll('.ichiLeg').forEach(el=>{el.style.opacity=showIchimoku?'1':'.3';});
-  drawAll();
-}
-document.getElementById('ichiToggle').addEventListener('change',e=>{
-  showIchimoku=e.target.checked;
-  updateIchimokuUI();
-});
-updateIchimokuUI();
 
 document.getElementById('fractalsToggle').addEventListener('change',e=>{
   showFractals=e.target.checked;
@@ -993,7 +974,16 @@ async function fetchBinanceKlines(symbol,interval,limit){
       resolve(data);
     }catch(e){reject(e);}finally{clearTimeout(timer);}
   }));
-  return Promise.any(requests);
+  return new Promise((resolve,reject)=>{
+    let pending=requests.length,lastError=new Error('Binance data unavailable');
+    requests.forEach(request=>{
+      request.then(resolve).catch(error=>{
+        lastError=error;
+        pending--;
+        if(pending===0)reject(lastError);
+      });
+    });
+  });
 }
 
 async function fetchCandles(){
@@ -1050,7 +1040,7 @@ function connectWS(){
     const c={time:+k.t,open:+k.o,high:+k.h,low:+k.l,close:+k.c,volume:+k.v};
     let closedCandleTime=null;
     if(candles.length&&candles[candles.length-1].time===c.time)candles[candles.length-1]=c;
-    else{closedCandleTime=candles.at(-1)?.time??null;candles.push(c);if(candles.length>300)candles.shift();}
+    else{const previousCandle=candles[candles.length-1];closedCandleTime=previousCandle?previousCandle.time:null;candles.push(c);if(candles.length>300)candles.shift();}
     updateStats();drawAll();
     if(closedCandleTime!=null)checkSolStrategySignal(closedCandleTime);
   };
@@ -1058,12 +1048,15 @@ function connectWS(){
   socket.onclose=()=>{if(socket===ws)setTimeout(connectWS,3000);};
 }
 
-const ro=new ResizeObserver(()=>resize());
-ro.observe(document.getElementById('wrap'));
+if('ResizeObserver' in window){
+  const ro=new ResizeObserver(()=>resize());
+  ro.observe(document.getElementById('wrap'));
+}
 window.addEventListener('resize',()=>setTimeout(resize,60));
 window.addEventListener('pageshow',()=>{setTimeout(()=>{resize();if(!candles.length)fetchCandles();},80);});
 window.addEventListener('orientationchange',()=>setTimeout(resize,180));
 if(window.visualViewport)window.visualViewport.addEventListener('resize',()=>setTimeout(resize,60));
+resize();
 fetchCandles().then(()=>{resize();if(candles.length)connectWS();});
 </script>
 </body>
