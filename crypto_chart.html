@@ -620,18 +620,18 @@ function drawMain(){
     if(cw>=5){ctx.strokeStyle=col;ctx.lineWidth=.5;ctx.strokeRect(x,bTop,cw,bH);}
   });
   if(showFractals){
-    const fractals=calcWilliamsFractals(candles,FRACTAL_PERIODS),markerSize=6;
+    const fractals=calcWilliamsFractals(candles,FRACTAL_PERIODS),markerSize=3;
     for(let i=startIdx;i<n;i++){
       const x=xOf(i);
       if(fractals.up[i]){
         const baseY=Math.max(PAD_T+1,yOf(candles[i].high)-markerSize-11);
-        ctx.beginPath();ctx.moveTo(x-markerSize,baseY);ctx.lineTo(x+markerSize,baseY);ctx.lineTo(x,baseY+markerSize+6);ctx.closePath();
-        ctx.fillStyle='#009688';ctx.fill();
+        ctx.beginPath();ctx.moveTo(x-markerSize,baseY);ctx.lineTo(x+markerSize,baseY);ctx.lineTo(x,baseY+markerSize+4);ctx.closePath();
+        ctx.fillStyle='#000000';ctx.fill();
       }
       if(fractals.down[i]){
         const baseY=Math.min(H-PAD_B-1,yOf(candles[i].low)+markerSize+11);
-        ctx.beginPath();ctx.moveTo(x-markerSize,baseY);ctx.lineTo(x+markerSize,baseY);ctx.lineTo(x,baseY-markerSize-6);ctx.closePath();
-        ctx.fillStyle='#F44336';ctx.fill();
+        ctx.beginPath();ctx.moveTo(x-markerSize,baseY);ctx.lineTo(x+markerSize,baseY);ctx.lineTo(x,baseY-markerSize-4);ctx.closePath();
+        ctx.fillStyle='#000000';ctx.fill();
       }
     }
   }
