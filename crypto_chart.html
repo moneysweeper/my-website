@@ -242,7 +242,9 @@ let lastReceivedAt=null;
 let chartStateMessage='차트 데이터를 불러오는 중…';
 let candleRetryTimer=null;
 let mX=-1,mY=-1,hover=false;
-let VISIBLE=100;
+const IS_PHONE=window.matchMedia('(max-width:600px), (orientation:landscape) and (max-width:900px) and (max-height:500px)').matches;
+let VISIBLE=IS_PHONE?50:100;
+document.getElementById('candleCountSelect').value=String(VISIBLE);
 const PAD_L=8,PAD_R=68,PAD_T=18,PAD_B=27;
 const RIGHT_GAP_SLOTS=2;
 
