@@ -34,8 +34,6 @@ html,body{width:100%;height:100%;background:#fff;overflow:hidden;}
 #strategyResult{padding:3px 8px;border:1px solid var(--border);border-radius:4px;background:#f7f9fc;color:var(--muted);font-size:11px;font-family:monospace;white-space:nowrap;}
 #strategyResult b{color:var(--text);}
 #strategyResult .profit{color:#00897b;}#strategyResult .loss{color:#e53935;}
-#kakaoAlertBtn{padding:4px 9px;border-radius:4px;border:1px solid #f5c400;background:#fee500;color:#191919;font-size:11px;font-family:monospace;cursor:pointer;white-space:nowrap;}
-#kakaoAlertBtn.on{box-shadow:inset 0 0 0 1px #191919;font-weight:bold;}
 #priceBlock{display:flex;align-items:baseline;gap:7px;}
 #symLabel{font-size:15px;font-weight:500;color:var(--text);font-family:monospace;letter-spacing:.5px;}
 #price{font-size:23px;font-weight:500;color:var(--text);font-family:monospace;}
@@ -64,12 +62,13 @@ html,body{width:100%;height:100%;background:#fff;overflow:hidden;}
 .plabel{position:absolute;top:4px;left:8px;font-size:11px;color:var(--muted);pointer-events:none;z-index:2;font-family:monospace;}
 #tooltip{position:absolute;top:8px;left:8px;background:rgba(255,255,255,0.97);border:1px solid var(--border);border-radius:6px;padding:7px 11px;font-size:12px;font-family:monospace;color:var(--muted);pointer-events:none;display:none;line-height:1.85;z-index:30;max-width:340px;box-shadow:0 3px 12px rgba(20,30,50,.12);}
 #tooltip b{color:var(--text);font-weight:500;}
-#intensityPopup{position:absolute;left:8px;bottom:8px;width:330px;padding:8px 9px;background:rgba(255,255,255,.96);border:1px solid #aeb7cf;border-radius:6px;box-shadow:0 3px 14px rgba(20,30,50,.16);z-index:24;display:none;font:10px monospace;color:var(--text);pointer-events:none;}
+#intensityPopup{position:absolute;left:8px;bottom:8px;width:395px;padding:8px 9px;background:rgba(255,255,255,.96);border:1px solid #aeb7cf;border-radius:6px;box-shadow:0 3px 14px rgba(20,30,50,.16);z-index:24;display:none;font:10px monospace;color:var(--text);pointer-events:none;}
 #intensityPopup.show{display:block;}
 #intensityHeader{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;font-size:11px;font-weight:bold;}
 #intensityUpdated{font-size:9px;color:var(--muted);font-weight:normal;}
-.intensityRow{display:grid;grid-template-columns:42px 1fr 104px;align-items:center;gap:5px;height:18px;}
+.intensityRow{display:grid;grid-template-columns:42px 1fr 104px 58px;align-items:center;gap:5px;height:18px;}
 .intensityTime{color:var(--muted);}.intensityPct{text-align:right;font-weight:bold;}
+.intensityBuyPct{text-align:right;color:#00897b;font-weight:bold;white-space:nowrap;}
 .intensityBar{display:flex;height:10px;border-radius:2px;overflow:hidden;background:#eee;}
 .buyBar{background:rgba(38,166,154,.72);}.sellBar{background:rgba(239,83,80,.68);}
 .intensityLegend{display:flex;gap:10px;margin-top:4px;color:var(--muted);font-size:9px;}.intensityLegend b:first-child{color:#00897b}.intensityLegend b:last-child{color:#d84343}
@@ -105,7 +104,7 @@ html,body{width:100%;height:100%;background:#fff;overflow:hidden;}
   .plabel{font-size:9px;top:3px;left:5px;}
   #tooltip{top:5px;left:5px;right:5px;max-width:none;padding:5px 7px;font-size:10px;line-height:1.55;}
   #intensityPopup{left:5px;right:5px;bottom:5px;width:auto;padding:6px;}
-  .intensityRow{grid-template-columns:38px 1fr 92px;gap:4px;}
+  .intensityRow{grid-template-columns:38px 1fr 92px 52px;gap:4px;}
   #footer{padding:3px 8px;font-size:9px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 }
 
@@ -134,7 +133,7 @@ html,body{width:100%;height:100%;background:#fff;overflow:hidden;}
   #pMacd{height:57px;}
   .plabel{top:2px;left:5px;font-size:8px;}
   #tooltip{top:4px;left:4px;max-width:300px;padding:4px 6px;font-size:9px;line-height:1.4;}
-  #intensityPopup{left:4px;bottom:4px;width:300px;padding:5px;}
+  #intensityPopup{left:4px;bottom:4px;width:365px;padding:5px;}
   #footer{display:none;}
 }
 </style>
@@ -172,10 +171,10 @@ html,body{width:100%;height:100%;background:#fff;overflow:hidden;}
       <label id="intensityToggleLabel"><input id="intensityToggle" type="checkbox">매수·매도 강도</label>
       <select id="strategySelect" aria-label="매매전략 선택">
         <option value="none">매매전략 선택</option>
-        <option value="macd-rsi">1. MACD, RSI</option>
+        <option value="macd-based-rsi">1. MACD, RSI 적용</option>
+        <option value="macd-rsi">2. RSI 적용</option>
       </select>
       <div id="strategyResult">수익률 <b>--</b> · 완료 <b>0회</b></div>
-      <button id="kakaoAlertBtn" type="button" title="카카오톡 알림 중계 웹훅 설정">카카오 알림 OFF</button>
       </div>
       <div id="infoRow">
       <div id="priceBlock">
@@ -236,18 +235,9 @@ let showFractals=true;
 const FRACTAL_PERIODS=2;
 let showOrderBlocks=true;
 const OB_SWING_LENGTH=10,OB_MAX_ATR_MULT=3.5,OB_ZONE_COUNT=3;
-let orderBlock30mCandles=[];
+let orderBlock30mCandles=[],orderBlock1hCandles=[];
 let showIntensity=false;
 let currentStrategy='none';
-const safeStorage={
-  get(key,fallback=''){try{return window.localStorage?.getItem(key)??fallback;}catch(e){return fallback;}},
-  set(key,value){try{window.localStorage?.setItem(key,value);}catch(e){}},
-  remove(key){try{window.localStorage?.removeItem(key);}catch(e){}}
-};
-let kakaoWebhookUrl=safeStorage.get('kakaoSignalWebhookUrl');
-let kakaoAlertEnabled=safeStorage.get('kakaoSignalAlertEnabled')==='true';
-let lastSignalKey=safeStorage.get('kakaoLastSolSignalKey');
-let signalCheckReady=false;
 let lastReceivedAt=null;
 let chartStateMessage='차트 데이터를 불러오는 중…';
 let candleRetryTimer=null;
@@ -283,7 +273,7 @@ async function fetchBuySellIntensity(){
       const total=+d[7],buy=+d[10],sell=Math.max(0,total-buy),buyPct=total?buy/total*100:50,sellPct=100-buyPct;
       const dt=new Date(+d[0]);
       const time=['1d','1w'].includes(requestedInterval)?`${String(dt.getMonth()+1).padStart(2,'0')}/${String(dt.getDate()).padStart(2,'0')}`:dt.toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit',hour12:false});
-      return `<div class="intensityRow" title="매수 $${fmtVol(buy)} · 매도 $${fmtVol(sell)}"><span class="intensityTime">${time}</span><span class="intensityBar"><i class="buyBar" style="width:${buyPct.toFixed(1)}%"></i><i class="sellBar" style="width:${sellPct.toFixed(1)}%"></i></span><span class="intensityPct">$${fmtVol(buy)} / $${fmtVol(sell)}</span></div>`;
+      return `<div class="intensityRow" title="매수 $${fmtVol(buy)} · 매도 $${fmtVol(sell)} · 매수 비율 ${buyPct.toFixed(1)}%"><span class="intensityTime">${time}</span><span class="intensityBar"><i class="buyBar" style="width:${buyPct.toFixed(1)}%"></i><i class="sellBar" style="width:${sellPct.toFixed(1)}%"></i></span><span class="intensityPct">$${fmtVol(buy)} / $${fmtVol(sell)}</span><span class="intensityBuyPct">매수 ${buyPct.toFixed(1)}%</span></div>`;
     }).join('');
     document.getElementById('intensityUpdated').textContent=`갱신 ${new Date().toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false})}`;
   }catch(e){
@@ -380,58 +370,46 @@ function calcMacdRsiStrategy(data){
   return{entries,trades,position,returnPct:(recentEquity-1)*100};
 }
 
+function calcMacdBasedRsiStrategy(data){
+  const rsi=calcRSI(data,14);
+  const{macdLine,sigLine}=calcMACD(data);
+  const entries=[],trades=[];
+  let position=null;
+  for(let i=1;i<data.length;i++){
+    const m=macdLine[i],s=sigLine[i],pm=macdLine[i-1],ps=sigLine[i-1];
+    if(rsi[i]==null||m==null||s==null||pm==null||ps==null)continue;
+    const crossedAbove=pm<=ps&&m>s;
+    const crossedBelow=pm>=ps&&m<s;
+    if(position&&position.type==='long'&&crossedBelow){
+      const rate=data[i].close/position.price-1;
+      trades.push({...position,exitIndex:i,exitPrice:data[i].close,rate});position=null;
+    }else if(position&&position.type==='short'&&crossedAbove){
+      const rate=position.price/data[i].close-1;
+      trades.push({...position,exitIndex:i,exitPrice:data[i].close,rate});position=null;
+    }
+    if(!position&&m>s&&rsi[i]>=50){
+      position={type:'long',entryIndex:i,price:data[i].close};entries.push({index:i,type:'long'});
+    }else if(!position&&m<s&&rsi[i]<=50){
+      position={type:'short',entryIndex:i,price:data[i].close};entries.push({index:i,type:'short'});
+    }
+  }
+  const recentCompletedTrades=trades.slice(-3);
+  const recentEquity=recentCompletedTrades.reduce((equity,trade)=>equity*(1+trade.rate),1);
+  return{entries,trades,position,returnPct:(recentEquity-1)*100};
+}
+
+function getCurrentStrategyResult(data){
+  if(currentStrategy==='macd-rsi')return calcMacdRsiStrategy(data);
+  if(currentStrategy==='macd-based-rsi')return calcMacdBasedRsiStrategy(data);
+  return null;
+}
+
 function updateStrategyResult(){
   const el=document.getElementById('strategyResult');
   if(currentStrategy==='none'||!candles.length){el.innerHTML='수익률 <b>--</b> · 완료 <b>0회</b>';return;}
-  const result=calcMacdRsiStrategy(candles),cls=result.returnPct>=0?'profit':'loss';
+  const result=getCurrentStrategyResult(candles),cls=result.returnPct>=0?'profit':'loss';
   const open=result.position?` · 보유 <b>${result.position.type==='long'?'매수':'매도'}</b>`:'';
   el.innerHTML=`수익률 <b class="${cls}">${result.returnPct>=0?'+':''}${result.returnPct.toFixed(2)}%</b> · 완료 <b>${result.trades.length}회</b>${open}`;
-}
-
-function updateKakaoAlertUI(){
-  const btn=document.getElementById('kakaoAlertBtn');
-  const active=kakaoAlertEnabled&&!!kakaoWebhookUrl;
-  btn.textContent=`카카오 알림 ${active?'ON':'OFF'}`;
-  btn.classList.toggle('on',active);
-  btn.title=active?'SOL 전략 신호 발생 시 화면 캡처를 전송합니다.':'클릭하여 카카오 알림 중계 웹훅을 설정하세요.';
-}
-
-function makeChartSnapshotBlob(){
-  return new Promise((resolve,reject)=>{
-    const panels=[cvs.main,cvs.vol,cvs.rsi,cvs.macd],totalH=panels.reduce((s,cv)=>s+cv.height,0);
-    const off=document.createElement('canvas');off.width=cvs.main.width;off.height=totalH;
-    const oc=off.getContext('2d');let y=0;
-    panels.forEach(cv=>{oc.drawImage(cv,0,y);y+=cv.height;});
-    off.toBlob(blob=>blob?resolve(blob):reject(new Error('화면 캡처 생성 실패')),'image/png');
-  });
-}
-
-function getLatestStrategySignal(data){
-  const result=calcMacdRsiStrategy(data),signals=[];
-  result.entries.forEach(entry=>signals.push({index:entry.index,kind:entry.type==='long'?'매수':'매도',price:data[entry.index].close}));
-  result.trades.forEach(trade=>signals.push({index:trade.exitIndex,kind:'청산',price:trade.exitPrice,position:trade.type,rate:trade.rate}));
-  const sortedSignals=signals.sort((a,b)=>a.index-b.index);
-  return sortedSignals[sortedSignals.length-1]||null;
-}
-
-async function sendKakaoSignalAlert(signal){
-  const candle=candles[signal.index],timestamp=candle.time;
-  const key=`SOLUSDT:${curInterval}:${timestamp}:${signal.kind}:${signal.position||''}`;
-  if(key===lastSignalKey)return;
-  lastSignalKey=key;safeStorage.set('kakaoLastSolSignalKey',key);
-  drawAll();await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
-  const image=await makeChartSnapshotBlob();
-  const message=`[SOL/USDT ${signal.kind} 신호]\n전략: MACD, RSI\n봉: ${INTERVAL_LABELS[curInterval]}\n가격: $${fmt(signal.price)}\n시간: ${new Date(timestamp).toLocaleString('ko-KR')}${signal.rate==null?'':`\n수익률: ${signal.rate>=0?'+':''}${(signal.rate*100).toFixed(2)}%`}`;
-  const form=new FormData();form.append('message',message);form.append('symbol','SOLUSDT');form.append('interval',curInterval);form.append('signal',signal.kind);form.append('timestamp',String(timestamp));form.append('image',image,`SOLUSDT_${curInterval}_${fmtDateFile(timestamp)}_${signal.kind}.png`);
-  const response=await fetch(kakaoWebhookUrl,{method:'POST',body:form});
-  if(!response.ok)throw new Error(`카카오 알림 웹훅 HTTP ${response.status}`);
-}
-
-function checkSolStrategySignal(closedCandleTime){
-  if(!signalCheckReady||!kakaoAlertEnabled||!kakaoWebhookUrl||currentStrategy!=='macd-rsi'||curSym!=='SOLUSDT')return;
-  const signal=getLatestStrategySignal(candles);
-  if(!signal||candles[signal.index].time!==closedCandleTime)return;
-  sendKakaoSignalAlert(signal).catch(error=>{console.error(error);alert(`카카오 알림 전송 실패: ${error.message}`);});
 }
 
 function getLayout(el){
@@ -585,13 +563,13 @@ function drawMain(){
   const xStep=Math.ceil(visN/6);
   ctx.font='11px monospace';ctx.fillStyle=TEXT;ctx.textAlign='center';
   for(let i=startIdx;i<n;i+=xStep)ctx.fillText(fmtDate(candles[i].time),xOf(i),H-PAD_B+14);
-  if(currentStrategy==='macd-rsi'){
-    const strategy=calcMacdRsiStrategy(candles);
-    const drawStrategySignal=(index,type,isExit,rate=null)=>{
+  if(currentStrategy!=='none'){
+    const strategy=getCurrentStrategyResult(candles);
+    const drawStrategySignal=(index,type,isExit,rate=null,xOffset=0)=>{
       if(index<startIdx||index>=n)return;
-      const x=xOf(index),bandW=Math.max(8,cw+gap),isLong=type==='long';
+      const candleX=xOf(index),x=candleX+xOffset,bandW=Math.max(8,cw+gap),isLong=type==='long';
       ctx.fillStyle=isLong?(isExit?'rgba(102,187,106,0.12)':'rgba(102,187,106,0.20)'):(isExit?'rgba(239,83,80,0.11)':'rgba(239,83,80,0.18)');
-      ctx.fillRect(x-bandW/2,PAD_T,bandW,chartH);
+      ctx.fillRect(candleX-bandW/2,PAD_T,bandW,chartH);
       const pointsDown=(isExit&&isLong)||(!isExit&&!isLong);
       ctx.beginPath();
       if(pointsDown){ctx.moveTo(x,PAD_T+13);ctx.lineTo(x-5,PAD_T+4);ctx.lineTo(x+5,PAD_T+4);}
@@ -606,11 +584,26 @@ function drawMain(){
         ctx.fillStyle=isLong?'#2e7d32':'#c62828';ctx.fillText(label,x,labelY);
       }
     };
-    strategy.entries.forEach(entry=>drawStrategySignal(entry.index,entry.type,false));
-    strategy.trades.forEach(trade=>drawStrategySignal(trade.exitIndex,trade.type,true,trade.rate));
+    const signals=[
+      ...strategy.entries.map(entry=>({index:entry.index,type:entry.type,isExit:false,rate:null})),
+      ...strategy.trades.map(trade=>({index:trade.exitIndex,type:trade.type,isExit:true,rate:trade.rate}))
+    ];
+    const signalsByIndex=new Map();
+    signals.forEach(signal=>{
+      if(!signalsByIndex.has(signal.index))signalsByIndex.set(signal.index,[]);
+      signalsByIndex.get(signal.index).push(signal);
+    });
+    signalsByIndex.forEach(group=>{
+      group.sort((a,b)=>Number(b.isExit)-Number(a.isExit));
+      group.forEach((signal,i)=>{
+        const xOffset=(i-(group.length-1)/2)*12;
+        drawStrategySignal(signal.index,signal.type,signal.isExit,signal.rate,xOffset);
+      });
+    });
   }
   if(showOrderBlocks)drawOrderBlocks(ctx,calcOrderBlocks(candles,OB_SWING_LENGTH),{W,startIdx,n,xOf},yOf);
   if(showOrderBlocks&&curInterval==='1h'&&orderBlock30mCandles.length)drawOrderBlocks(ctx,calcOrderBlocks(orderBlock30mCandles,OB_SWING_LENGTH),{W,startIdx,n,xOf},yOf,'30분봉',true);
+  if(showOrderBlocks&&curInterval==='4h'&&orderBlock1hCandles.length)drawOrderBlocks(ctx,calcOrderBlocks(orderBlock1hCandles,OB_SWING_LENGTH),{W,startIdx,n,xOf},yOf,'1시간봉',true);
   MA_P.forEach(p=>{
     const vals=maLines[p];ctx.beginPath();ctx.strokeStyle=MA_C[p];ctx.lineWidth=MA_W[p];ctx.lineJoin='round';ctx.setLineDash([]);
     let s=false;for(let i=startIdx;i<n;i++){const v=vals[i];if(v==null)continue;if(!s){ctx.moveTo(xOf(i),yOf(v));s=true;}else ctx.lineTo(xOf(i),yOf(v));}ctx.stroke();
@@ -658,8 +651,8 @@ function drawMain(){
     if(mY>=PAD_T&&mY<=H-PAD_B){
       const pc=vOfY(mY);
       let previousEntry=null,hoverReturn=null;
-      if(currentStrategy==='macd-rsi'){
-        const strategy=calcMacdRsiStrategy(candles),cursorIndex=startIdx+ri;
+      if(currentStrategy!=='none'){
+        const strategy=getCurrentStrategyResult(candles),cursorIndex=startIdx+ri;
         previousEntry=[...strategy.entries].reverse().find(entry=>entry.index<=cursorIndex)||null;
         if(previousEntry){
           const entryPrice=candles[previousEntry.index].close;
@@ -910,21 +903,9 @@ document.getElementById('intensityToggle').addEventListener('change',e=>{
 
 document.getElementById('strategySelect').addEventListener('change',e=>{
   currentStrategy=e.target.value;
-  signalCheckReady=false;
   updateStrategyResult();
   drawAll();
-  setTimeout(()=>{signalCheckReady=true;},0);
 });
-
-document.getElementById('kakaoAlertBtn').addEventListener('click',()=>{
-  const entered=prompt('카카오톡 중계 웹훅 URL을 입력하세요.\n신호 발생 시 message, signal, image(PNG)를 multipart/form-data로 전송합니다.',kakaoWebhookUrl);
-  if(entered===null)return;
-  kakaoWebhookUrl=entered.trim();kakaoAlertEnabled=!!kakaoWebhookUrl;
-  if(kakaoWebhookUrl)safeStorage.set('kakaoSignalWebhookUrl',kakaoWebhookUrl);else safeStorage.remove('kakaoSignalWebhookUrl');
-  safeStorage.set('kakaoSignalAlertEnabled',String(kakaoAlertEnabled));
-  updateKakaoAlertUI();
-});
-updateKakaoAlertUI();
 
 document.getElementById('candleCountSelect').addEventListener('change',e=>{
   VISIBLE=parseInt(e.target.value,10)||100;
@@ -995,8 +976,9 @@ async function fetchCandles(){
     candles=data.map(d=>({time:+d[0],open:+d[1],high:+d[2],low:+d[3],close:+d[4],volume:+d[5]}));
     chartStateMessage='';
     clearTimeout(candleRetryTimer);candleRetryTimer=null;
-    orderBlock30mCandles=[];
+    orderBlock30mCandles=[];orderBlock1hCandles=[];
     if(requestedInterval==='1h')await fetchOrderBlock30m(requestedSymbol);
+    if(requestedInterval==='4h')await fetchOrderBlock1h(requestedSymbol);
     markDataReceived();
     updateStats();
     drawAll();
@@ -1014,7 +996,19 @@ async function fetchOrderBlock30m(requestedSymbol=curSym){
     orderBlock30mCandles=data.map(d=>({time:+d[0],open:+d[1],high:+d[2],low:+d[3],close:+d[4],volume:+d[5]}));
   }catch(e){console.error(e);}
 }
-setInterval(()=>{if(curInterval==='1h'&&showOrderBlocks)fetchOrderBlock30m().then(drawAll);},60000);
+
+async function fetchOrderBlock1h(requestedSymbol=curSym){
+  try{
+    const data=await fetchBinanceKlines(requestedSymbol,'1h',300);
+    if(requestedSymbol!==curSym||curInterval!=='4h')return;
+    orderBlock1hCandles=data.map(d=>({time:+d[0],open:+d[1],high:+d[2],low:+d[3],close:+d[4],volume:+d[5]}));
+  }catch(e){console.error(e);}
+}
+setInterval(()=>{
+  if(!showOrderBlocks)return;
+  if(curInterval==='1h')fetchOrderBlock30m().then(drawAll);
+  if(curInterval==='4h')fetchOrderBlock1h().then(drawAll);
+},60000);
 
 function updateStats(){
   if(!candles.length)return;
@@ -1038,11 +1032,9 @@ function connectWS(){
     const k=JSON.parse(e.data).k;
     markDataReceived();
     const c={time:+k.t,open:+k.o,high:+k.h,low:+k.l,close:+k.c,volume:+k.v};
-    let closedCandleTime=null;
     if(candles.length&&candles[candles.length-1].time===c.time)candles[candles.length-1]=c;
-    else{const previousCandle=candles[candles.length-1];closedCandleTime=previousCandle?previousCandle.time:null;candles.push(c);if(candles.length>300)candles.shift();}
+    else{candles.push(c);if(candles.length>300)candles.shift();}
     updateStats();drawAll();
-    if(closedCandleTime!=null)checkSolStrategySignal(closedCandleTime);
   };
   socket.onerror=()=>{if(socket===ws)setTimeout(connectWS,3000);};
   socket.onclose=()=>{if(socket===ws)setTimeout(connectWS,3000);};
