@@ -322,13 +322,6 @@ function drawVuManChuSwing(ctx,result,layout,yOf){
   };
   drawFill(result.highBand,result.filter,'rgba(0,179,107,.08)');
   drawFill(result.filter,result.lowBand,'rgba(184,0,93,.08)');
-  ctx.lineWidth=3;ctx.lineJoin='round';ctx.lineCap='round';ctx.globalAlpha=.55;
-  for(let i=Math.max(startIdx,1);i<n;i++){
-    if(result.filter[i-1]==null||result.filter[i]==null)continue;
-    ctx.beginPath();ctx.moveTo(xOf(i-1),yOf(result.filter[i-1]));ctx.lineTo(xOf(i),yOf(result.filter[i]));
-    ctx.strokeStyle=result.direction[i]===1?'#05ff9b':result.direction[i]===-1?'#ff0583':'#cccccc';ctx.stroke();
-  }
-  ctx.globalAlpha=1;ctx.lineCap='butt';
 }
 
 function drawVuManChuSignals(ctx,result,layout,yOf){
