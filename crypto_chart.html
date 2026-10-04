@@ -26,9 +26,9 @@ html,body{width:100%;height:100%;background:#fff;overflow:hidden;}
 #orderBlockToggleLabel{display:flex;align-items:center;gap:5px;padding:3px 8px;border:1px solid #9fabc0;border-radius:4px;background:#eef3f7;color:var(--text);font-size:11px;font-family:monospace;cursor:pointer;white-space:nowrap;}
 #orderBlockToggle{width:14px;height:14px;accent-color:#089981;cursor:pointer;}
 #orderBlockToggleLabel.active{border-color:#089981;background:#e1f3ef;}
-#intensityToggleLabel{display:flex;align-items:center;gap:5px;padding:3px 8px;border:1px solid var(--border);border-radius:4px;background:#f5f8ff;color:var(--text);font-size:11px;font-family:monospace;cursor:pointer;white-space:nowrap;}
-#intensityToggle{width:14px;height:14px;accent-color:#5c6bc0;cursor:pointer;}
-#intensityToggleLabel.active{border-color:#5c6bc0;background:#eef0ff;}
+#vumanchuToggleLabel{display:flex;align-items:center;gap:5px;padding:3px 8px;border:1px solid #9fabc0;border-radius:4px;background:#eef3f7;color:var(--text);font-size:11px;font-family:monospace;cursor:pointer;white-space:nowrap;}
+#vumanchuToggle{width:14px;height:14px;accent-color:#089981;cursor:pointer;}
+#vumanchuToggleLabel.active{border-color:#089981;background:#e1f3ef;}
 #strategySelect{padding:4px 26px 4px 9px;border-radius:4px;border:1px solid #b7bfd0;background:#f7f9fc;color:var(--text);font-size:12px;font-family:monospace;cursor:pointer;outline:none;}
 #strategySelect:hover,#strategySelect:focus{border-color:#5d6a9a;}
 #strategyResult{padding:3px 8px;border:1px solid var(--border);border-radius:4px;background:#f7f9fc;color:var(--muted);font-size:11px;font-family:monospace;white-space:nowrap;}
@@ -62,16 +62,6 @@ html,body{width:100%;height:100%;background:#fff;overflow:hidden;}
 .plabel{position:absolute;top:4px;left:8px;font-size:11px;color:var(--muted);pointer-events:none;z-index:2;font-family:monospace;}
 #tooltip{position:absolute;top:8px;left:8px;background:rgba(255,255,255,0.97);border:1px solid var(--border);border-radius:6px;padding:7px 11px;font-size:12px;font-family:monospace;color:var(--muted);pointer-events:none;display:none;line-height:1.85;z-index:30;max-width:340px;box-shadow:0 3px 12px rgba(20,30,50,.12);}
 #tooltip b{color:var(--text);font-weight:500;}
-#intensityPopup{position:absolute;left:8px;bottom:8px;width:395px;padding:8px 9px;background:rgba(255,255,255,.96);border:1px solid #aeb7cf;border-radius:6px;box-shadow:0 3px 14px rgba(20,30,50,.16);z-index:24;display:none;font:10px monospace;color:var(--text);pointer-events:none;}
-#intensityPopup.show{display:block;}
-#intensityHeader{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;font-size:11px;font-weight:bold;}
-#intensityUpdated{font-size:9px;color:var(--muted);font-weight:normal;}
-.intensityRow{display:grid;grid-template-columns:42px 1fr 104px 58px;align-items:center;gap:5px;height:18px;}
-.intensityTime{color:var(--muted);}.intensityPct{text-align:right;font-weight:bold;}
-.intensityBuyPct{text-align:right;color:#00897b;font-weight:bold;white-space:nowrap;}
-.intensityBar{display:flex;height:10px;border-radius:2px;overflow:hidden;background:#eee;}
-.buyBar{background:rgba(38,166,154,.72);}.sellBar{background:rgba(239,83,80,.68);}
-.intensityLegend{display:flex;gap:10px;margin-top:4px;color:var(--muted);font-size:9px;}.intensityLegend b:first-child{color:#00897b}.intensityLegend b:last-child{color:#d84343}
 #footer{padding:4px 12px;font-size:11px;color:var(--muted);font-family:monospace;border-top:.5px solid var(--border);flex-shrink:0;}
 #dot{display:inline-block;width:5px;height:5px;border-radius:50%;background:#26a69a;margin-right:4px;animation:pulse 1.5s infinite;}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
@@ -103,8 +93,6 @@ html,body{width:100%;height:100%;background:#fff;overflow:hidden;}
   #pMacd{height:92px;}
   .plabel{font-size:9px;top:3px;left:5px;}
   #tooltip{top:5px;left:5px;right:5px;max-width:none;padding:5px 7px;font-size:10px;line-height:1.55;}
-  #intensityPopup{left:5px;right:5px;bottom:5px;width:auto;padding:6px;}
-  .intensityRow{grid-template-columns:38px 1fr 92px 52px;gap:4px;}
   #footer{padding:3px 8px;font-size:9px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 }
 
@@ -133,7 +121,6 @@ html,body{width:100%;height:100%;background:#fff;overflow:hidden;}
   #pMacd{height:57px;}
   .plabel{top:2px;left:5px;font-size:8px;}
   #tooltip{top:4px;left:4px;max-width:300px;padding:4px 6px;font-size:9px;line-height:1.4;}
-  #intensityPopup{left:4px;bottom:4px;width:365px;padding:5px;}
   #footer{display:none;}
 }
 </style>
@@ -168,10 +155,10 @@ html,body{width:100%;height:100%;background:#fff;overflow:hidden;}
       </select>
       <label id="fractalsToggleLabel" class="active" title="Williams Fractals · Periods 2"><input id="fractalsToggle" type="checkbox" checked>Williams Fractals</label>
       <label id="orderBlockToggleLabel" class="active" title="Volumized Order Blocks · Swing Length 10"><input id="orderBlockToggle" type="checkbox" checked>Order Block</label>
-      <label id="intensityToggleLabel"><input id="intensityToggle" type="checkbox">매수·매도 강도</label>
+      <label id="vumanchuToggleLabel" class="active" title="Range Filter · Period 23 · Multiplier 2.5"><input id="vumanchuToggle" type="checkbox" checked>VuManChu Swing</label>
       <select id="strategySelect" aria-label="매매전략 선택">
         <option value="none">매매전략 선택</option>
-        <option value="macd-based-rsi">1. MACD, RSI 적용</option>
+        <option value="macd-based-rsi" selected>1. MACD, RSI 적용</option>
         <option value="macd-rsi">2. RSI 적용</option>
       </select>
       <div id="strategyResult">수익률 <b>--</b> · 완료 <b>0회</b></div>
@@ -208,11 +195,6 @@ html,body{width:100%;height:100%;background:#fff;overflow:hidden;}
     <div class="panel" id="pMain" style="position:relative;">
       <canvas id="cvMain" aria-label="메인 캔들차트"></canvas>
       <div id="tooltip"></div>
-      <div id="intensityPopup">
-        <div id="intensityHeader"><span id="intensityTitle">최근 10개 봉 매수·매도 강도</span><span id="intensityUpdated">대기 중</span></div>
-        <div id="intensityRows">데이터를 불러오는 중…</div>
-        <div class="intensityLegend"><b>■ 매수</b><b>■ 매도</b><span>최신순 · USDT 체결금액</span></div>
-      </div>
     </div>
     <div class="panel" id="pVol"><canvas id="cvVol"></canvas><div class="plabel">VOL</div></div>
     <div class="panel" id="pRsi"><canvas id="cvRsi"></canvas><div class="plabel" id="rsiLabel">RSI(14)</div></div>
@@ -236,8 +218,9 @@ const FRACTAL_PERIODS=2;
 let showOrderBlocks=true;
 const OB_SWING_LENGTH=10,OB_MAX_ATR_MULT=3.5,OB_ZONE_COUNT=3;
 let orderBlock30mCandles=[],orderBlock1hCandles=[];
-let showIntensity=false;
-let currentStrategy='none';
+let showVuManChu=true;
+const VUMANCHU_PERIOD=23,VUMANCHU_MULTIPLIER=2.5;
+let currentStrategy='macd-based-rsi';
 let lastReceivedAt=null;
 let chartStateMessage='차트 데이터를 불러오는 중…';
 let candleRetryTimer=null;
@@ -261,28 +244,6 @@ function updateReceiveStatus(){
 }
 function markDataReceived(){lastReceivedAt=Date.now();updateReceiveStatus();}
 setInterval(updateReceiveStatus,1000);
-
-async function fetchBuySellIntensity(){
-  if(!showIntensity)return;
-  const requestedSymbol=curSym,rowsEl=document.getElementById('intensityRows');
-  try{
-    const requestedInterval=curInterval;
-    const res=await fetch(`https://api.binance.com/api/v3/klines?symbol=${requestedSymbol}&interval=${requestedInterval}&limit=10`);
-    if(!res.ok)throw new Error(`HTTP ${res.status}`);
-    const data=await res.json();if(requestedSymbol!==curSym||requestedInterval!==curInterval||!showIntensity)return;
-    document.getElementById('intensityTitle').textContent=`${INTERVAL_LABELS[requestedInterval]} 최근 10개 강도`;
-    rowsEl.innerHTML=data.slice().reverse().map(d=>{
-      const total=+d[7],buy=+d[10],sell=Math.max(0,total-buy),buyPct=total?buy/total*100:50,sellPct=100-buyPct;
-      const dt=new Date(+d[0]);
-      const time=['1d','1w'].includes(requestedInterval)?`${String(dt.getMonth()+1).padStart(2,'0')}/${String(dt.getDate()).padStart(2,'0')}`:dt.toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit',hour12:false});
-      return `<div class="intensityRow" title="매수 $${fmtVol(buy)} · 매도 $${fmtVol(sell)} · 매수 비율 ${buyPct.toFixed(1)}%"><span class="intensityTime">${time}</span><span class="intensityBar"><i class="buyBar" style="width:${buyPct.toFixed(1)}%"></i><i class="sellBar" style="width:${sellPct.toFixed(1)}%"></i></span><span class="intensityPct">$${fmtVol(buy)} / $${fmtVol(sell)}</span><span class="intensityBuyPct">매수 ${buyPct.toFixed(1)}%</span></div>`;
-    }).join('');
-    document.getElementById('intensityUpdated').textContent=`갱신 ${new Date().toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false})}`;
-  }catch(e){
-    rowsEl.textContent='강도 데이터를 불러오지 못했습니다.';console.error(e);
-  }
-}
-setInterval(()=>{if(showIntensity)fetchBuySellIntensity();},15000);
 
 function resize(){
   const dpr=Math.min(window.devicePixelRatio||1,2);
@@ -321,6 +282,69 @@ function calcEMA(data,period){
   const ema=new Array(data.length).fill(null);const k=2/(period+1);let start=-1;
   for(let i=0;i<data.length;i++){if(data[i]==null)continue;if(start===-1){ema[i]=data[i];start=i;}else ema[i]=data[i]*k+ema[i-1]*(1-k);}
   return ema;
+}
+
+// Range Filter - B&S Signals (MPL-2.0), based on DonovanWall's Range Filter.
+// Pine Script inputs: source=close, Swing Period=23, Swing Multiplier=2.5.
+function calcVuManChuSwing(data,period=23,multiplier=2.5){
+  const closes=data.map(c=>c.close),changes=closes.map((v,i)=>i?Math.abs(v-closes[i-1]):null);
+  const averageRange=calcEMA(changes,period),smoothRange=calcEMA(averageRange,period*2-1).map(v=>v==null?null:v*multiplier);
+  const filter=new Array(data.length).fill(null),highBand=new Array(data.length).fill(null),lowBand=new Array(data.length).fill(null);
+  const direction=new Array(data.length).fill(0),buy=new Array(data.length).fill(false),sell=new Array(data.length).fill(false);
+  let previousFilter=closes[0]??null,previousCondition=0;
+  for(let i=0;i<data.length;i++){
+    const source=closes[i],range=smoothRange[i];
+    if(range==null){filter[i]=previousFilter;continue;}
+    let currentFilter=previousFilter;
+    if(source-range>previousFilter)currentFilter=source-range;
+    if(source+range<previousFilter)currentFilter=source+range;
+    filter[i]=currentFilter;highBand[i]=currentFilter+range;lowBand[i]=currentFilter-range;
+    direction[i]=i&&currentFilter>filter[i-1]?1:i&&currentFilter<filter[i-1]?-1:(i?direction[i-1]:0);
+    const moved=i>0&&source!==closes[i-1];
+    const longCondition=source>currentFilter&&moved&&direction[i]===1;
+    const shortCondition=source<currentFilter&&moved&&direction[i]===-1;
+    buy[i]=longCondition&&previousCondition===-1;
+    sell[i]=shortCondition&&previousCondition===1;
+    if(longCondition)previousCondition=1;else if(shortCondition)previousCondition=-1;
+    previousFilter=currentFilter;
+  }
+  return{filter,highBand,lowBand,direction,buy,sell};
+}
+
+function drawVuManChuSwing(ctx,result,layout,yOf){
+  const{startIdx,n,xOf}=layout;
+  const drawFill=(upper,lower,color)=>{
+    const points=[];for(let i=startIdx;i<n;i++)if(upper[i]!=null&&lower[i]!=null)points.push(i);
+    if(points.length<2)return;
+    ctx.beginPath();points.forEach((i,p)=>p?ctx.lineTo(xOf(i),yOf(upper[i])):ctx.moveTo(xOf(i),yOf(upper[i])));
+    for(let p=points.length-1;p>=0;p--){const i=points[p];ctx.lineTo(xOf(i),yOf(lower[i]));}
+    ctx.closePath();ctx.fillStyle=color;ctx.fill();
+  };
+  drawFill(result.highBand,result.filter,'rgba(0,179,107,.08)');
+  drawFill(result.filter,result.lowBand,'rgba(184,0,93,.08)');
+  ctx.lineWidth=3;ctx.lineJoin='round';ctx.lineCap='round';ctx.globalAlpha=.55;
+  for(let i=Math.max(startIdx,1);i<n;i++){
+    if(result.filter[i-1]==null||result.filter[i]==null)continue;
+    ctx.beginPath();ctx.moveTo(xOf(i-1),yOf(result.filter[i-1]));ctx.lineTo(xOf(i),yOf(result.filter[i]));
+    ctx.strokeStyle=result.direction[i]===1?'#05ff9b':result.direction[i]===-1?'#ff0583':'#cccccc';ctx.stroke();
+  }
+  ctx.globalAlpha=1;ctx.lineCap='butt';
+}
+
+function drawVuManChuSignals(ctx,result,layout,yOf){
+  const{startIdx,n,xOf}=layout;
+  for(let i=startIdx;i<n;i++){
+    const isBuy=result.buy[i],isSell=result.sell[i];if(!isBuy&&!isSell)continue;
+    const label=isBuy?'BUY':'SELL',color=isBuy?'#16a34a':'#dc2626';
+    const x=xOf(i),y=isBuy?yOf(candles[i].low)+18:yOf(candles[i].high)-18;
+    ctx.font='bold 10px monospace';const w=ctx.measureText(label).width+8,h=16;
+    ctx.fillStyle=color;ctx.beginPath();ctx.roundRect(x-w/2,y-h/2,w,h,3);ctx.fill();
+    ctx.fillStyle='#fff';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(label,x,y+.5);ctx.textBaseline='alphabetic';
+    ctx.beginPath();
+    if(isBuy){ctx.moveTo(x,y-h/2-5);ctx.lineTo(x-4,y-h/2);ctx.lineTo(x+4,y-h/2);}
+    else{ctx.moveTo(x,y+h/2+5);ctx.lineTo(x-4,y+h/2);ctx.lineTo(x+4,y+h/2);}
+    ctx.closePath();ctx.fillStyle=color;ctx.fill();
+  }
 }
 function calcMACD(data){
   const closes=data.map(c=>c.close);
@@ -549,10 +573,12 @@ function drawMain(){
     return;
   }
   const maLines={};MA_P.forEach(p=>{maLines[p]=calcMA(candles,p);});
+  const vuManChu=showVuManChu?calcVuManChuSwing(candles,VUMANCHU_PERIOD,VUMANCHU_MULTIPLIER):null;
   const visCan=candles.slice(startIdx);
   let hi=-Infinity,lo=Infinity;
   visCan.forEach(c=>{hi=Math.max(hi,c.high);lo=Math.min(lo,c.low);});
   MA_P.forEach(p=>{maLines[p].slice(startIdx).forEach(v=>{if(v!=null){hi=Math.max(hi,v);lo=Math.min(lo,v);}});});
+  if(vuManChu){[vuManChu.highBand,vuManChu.lowBand].forEach(line=>line.slice(startIdx).forEach(v=>{if(v!=null){hi=Math.max(hi,v);lo=Math.min(lo,v);}}));}
   const rng=hi-lo||1,hiP=hi+rng*0.06,loP=lo-rng*0.06,prng=hiP-loP;
   const yOf=v=>PAD_T+chartH*(1-(v-loP)/prng);
   const vOfY=y=>loP+prng*(1-(y-PAD_T)/chartH);
@@ -606,6 +632,7 @@ function drawMain(){
   if(showOrderBlocks)drawOrderBlocks(ctx,calcOrderBlocks(candles,OB_SWING_LENGTH),{W,startIdx,n,xOf},yOf);
   if(showOrderBlocks&&curInterval==='1h'&&orderBlock30mCandles.length)drawOrderBlocks(ctx,calcOrderBlocks(orderBlock30mCandles,OB_SWING_LENGTH),{W,startIdx,n,xOf},yOf,'30분봉',true);
   if(showOrderBlocks&&curInterval==='4h'&&orderBlock1hCandles.length)drawOrderBlocks(ctx,calcOrderBlocks(orderBlock1hCandles,OB_SWING_LENGTH),{W,startIdx,n,xOf},yOf,'1시간봉',true);
+  if(vuManChu)drawVuManChuSwing(ctx,vuManChu,{startIdx,n,xOf},yOf);
   MA_P.forEach(p=>{
     const vals=maLines[p];ctx.beginPath();ctx.strokeStyle=MA_C[p];ctx.lineWidth=MA_W[p];ctx.lineJoin='round';ctx.setLineDash([]);
     let s=false;for(let i=startIdx;i<n;i++){const v=vals[i];if(v==null)continue;if(!s){ctx.moveTo(xOf(i),yOf(v));s=true;}else ctx.lineTo(xOf(i),yOf(v));}ctx.stroke();
@@ -621,6 +648,7 @@ function drawMain(){
     ctx.fillStyle=col;ctx.fillRect(x,bTop,cw,bH);
     if(cw>=5){ctx.strokeStyle=col;ctx.lineWidth=.5;ctx.strokeRect(x,bTop,cw,bH);}
   });
+  if(vuManChu)drawVuManChuSignals(ctx,vuManChu,{startIdx,n,xOf},yOf);
   if(showFractals){
     const fractals=calcWilliamsFractals(candles,FRACTAL_PERIODS),markerSize=3;
     for(let i=startIdx;i<n;i++){
@@ -879,7 +907,6 @@ document.querySelectorAll('.symBtn').forEach(btn=>{
     document.getElementById('price').textContent='--';
     document.getElementById('change').textContent='--';
     candles=[];lastReceivedAt=null;updateReceiveStatus();if(ws){ws.close();ws=null;}
-    if(showIntensity)fetchBuySellIntensity();
     fetchCandles().then(()=>{drawAll();if(candles.length)connectWS();});
   });
 });
@@ -896,11 +923,10 @@ document.getElementById('orderBlockToggle').addEventListener('change',e=>{
   drawAll();
 });
 
-document.getElementById('intensityToggle').addEventListener('change',e=>{
-  showIntensity=e.target.checked;
-  document.getElementById('intensityToggleLabel').classList.toggle('active',showIntensity);
-  document.getElementById('intensityPopup').classList.toggle('show',showIntensity);
-  if(showIntensity){document.getElementById('intensityRows').textContent='데이터를 불러오는 중…';fetchBuySellIntensity();}
+document.getElementById('vumanchuToggle').addEventListener('change',e=>{
+  showVuManChu=e.target.checked;
+  document.getElementById('vumanchuToggleLabel').classList.toggle('active',showVuManChu);
+  drawMain();
 });
 
 document.getElementById('strategySelect').addEventListener('change',e=>{
@@ -917,7 +943,6 @@ document.getElementById('candleCountSelect').addEventListener('change',e=>{
 
 document.getElementById('intervalSelect').addEventListener('change',e=>{
   curInterval=e.target.value;
-  if(showIntensity)fetchBuySellIntensity();
   document.getElementById('intervalLabel').textContent=INTERVAL_LABELS[curInterval];
   document.title=`Crypto Chart — Binance ${INTERVAL_LABELS[curInterval]}`;
   document.getElementById('price').textContent='--';
