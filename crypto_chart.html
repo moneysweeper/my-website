@@ -314,19 +314,6 @@ function calcVuManChuSwing(data,period=23,multiplier=2.5){
   return{filter,highBand,lowBand,direction,buy,sell};
 }
 
-function drawVuManChuSwing(ctx,result,layout,yOf){
-  const{startIdx,n,xOf}=layout;
-  const drawFill=(upper,lower,color)=>{
-    const points=[];for(let i=startIdx;i<n;i++)if(upper[i]!=null&&lower[i]!=null)points.push(i);
-    if(points.length<2)return;
-    ctx.beginPath();points.forEach((i,p)=>p?ctx.lineTo(xOf(i),yOf(upper[i])):ctx.moveTo(xOf(i),yOf(upper[i])));
-    for(let p=points.length-1;p>=0;p--){const i=points[p];ctx.lineTo(xOf(i),yOf(lower[i]));}
-    ctx.closePath();ctx.fillStyle=color;ctx.fill();
-  };
-  drawFill(result.highBand,result.filter,'rgba(0,179,107,.08)');
-  drawFill(result.filter,result.lowBand,'rgba(184,0,93,.08)');
-}
-
 function drawVuManChuSignals(ctx,result,layout,yOf){
   const{startIdx,n,xOf}=layout;
   for(let i=startIdx;i<n;i++){
@@ -646,7 +633,6 @@ function drawMain(){
   let hi=-Infinity,lo=Infinity;
   visCan.forEach(c=>{hi=Math.max(hi,c.high);lo=Math.min(lo,c.low);});
   MA_P.forEach(p=>{maLines[p].slice(startIdx).forEach(v=>{if(v!=null){hi=Math.max(hi,v);lo=Math.min(lo,v);}});});
-  if(vuManChu){[vuManChu.highBand,vuManChu.lowBand].forEach(line=>line.slice(startIdx).forEach(v=>{if(v!=null){hi=Math.max(hi,v);lo=Math.min(lo,v);}}));}
   const rng=hi-lo||1,hiP=hi+rng*0.06,loP=lo-rng*0.06,prng=hiP-loP;
   const yOf=v=>PAD_T+chartH*(1-(v-loP)/prng);
   const vOfY=y=>loP+prng*(1-(y-PAD_T)/chartH);
@@ -700,7 +686,6 @@ function drawMain(){
   if(showOrderBlocks)drawOrderBlocks(ctx,calcOrderBlocks(candles,OB_SWING_LENGTH),{W,startIdx,n,xOf},yOf);
   if(showOrderBlocks&&curInterval==='1h'&&orderBlock30mCandles.length)drawOrderBlocks(ctx,calcOrderBlocks(orderBlock30mCandles,OB_SWING_LENGTH),{W,startIdx,n,xOf},yOf,'30분봉',true);
   if(showOrderBlocks&&curInterval==='4h'&&orderBlock1hCandles.length)drawOrderBlocks(ctx,calcOrderBlocks(orderBlock1hCandles,OB_SWING_LENGTH),{W,startIdx,n,xOf},yOf,'1시간봉',true);
-  if(vuManChu)drawVuManChuSwing(ctx,vuManChu,{startIdx,n,xOf},yOf);
   if(fibonacci)drawAdvancedFibonacci(ctx,fibonacci,{W,H,startIdx,n,xOf,cw,gap},yOf);
   MA_P.forEach(p=>{
     const vals=maLines[p];ctx.beginPath();ctx.strokeStyle=MA_C[p];ctx.lineWidth=MA_W[p];ctx.lineJoin='round';ctx.setLineDash([]);
