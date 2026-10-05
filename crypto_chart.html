@@ -23,9 +23,9 @@ html,body{width:100%;height:100%;background:#fff;overflow:hidden;}
 #fractalsToggleLabel{display:flex;align-items:center;gap:5px;padding:3px 8px;border:1px solid var(--border);border-radius:4px;background:#f2fbfa;color:var(--text);font-size:11px;font-family:monospace;cursor:pointer;white-space:nowrap;}
 #fractalsToggle{width:14px;height:14px;accent-color:#009688;cursor:pointer;}
 #fractalsToggleLabel.active{border-color:#009688;background:#e4f7f4;}
-#orderBlockToggleLabel{display:flex;align-items:center;gap:5px;padding:3px 8px;border:1px solid #9fabc0;border-radius:4px;background:#eef3f7;color:var(--text);font-size:11px;font-family:monospace;cursor:pointer;white-space:nowrap;}
-#orderBlockToggle{width:14px;height:14px;accent-color:#089981;cursor:pointer;}
-#orderBlockToggleLabel.active{border-color:#089981;background:#e1f3ef;}
+#orderBlockToggleLabel,#fibonacciToggleLabel{display:flex;align-items:center;gap:5px;padding:3px 8px;border:1px solid #9fabc0;border-radius:4px;background:#eef3f7;color:var(--text);font-size:11px;font-family:monospace;cursor:pointer;white-space:nowrap;}
+#orderBlockToggle,#fibonacciToggle{width:14px;height:14px;accent-color:#089981;cursor:pointer;}
+#orderBlockToggleLabel.active,#fibonacciToggleLabel.active{border-color:#089981;background:#e1f3ef;}
 #vumanchuToggleLabel{display:flex;align-items:center;gap:5px;padding:3px 8px;border:1px solid #9fabc0;border-radius:4px;background:#eef3f7;color:var(--text);font-size:11px;font-family:monospace;cursor:pointer;white-space:nowrap;}
 #vumanchuToggle{width:14px;height:14px;accent-color:#089981;cursor:pointer;}
 #vumanchuToggleLabel.active{border-color:#089981;background:#e1f3ef;}
@@ -156,6 +156,7 @@ html,body{width:100%;height:100%;background:#fff;overflow:hidden;}
       <label id="fractalsToggleLabel" class="active" title="Williams Fractals · Periods 2"><input id="fractalsToggle" type="checkbox" checked>Williams Fractals</label>
       <label id="orderBlockToggleLabel" class="active" title="Volumized Order Blocks · Swing Length 10"><input id="orderBlockToggle" type="checkbox" checked>Order Block</label>
       <label id="vumanchuToggleLabel" class="active" title="Range Filter · Period 23 · Multiplier 2.5"><input id="vumanchuToggle" type="checkbox" checked>VuManChu Swing</label>
+      <label id="fibonacciToggleLabel" class="active" title="Advanced Fibonacci Golden Zone · Pivot 13/6"><input id="fibonacciToggle" type="checkbox" checked>Fibonacci</label>
       <select id="strategySelect" aria-label="매매전략 선택">
         <option value="none">매매전략 선택</option>
         <option value="macd-based-rsi" selected>1. MACD, RSI 적용</option>
@@ -220,6 +221,8 @@ const OB_SWING_LENGTH=10,OB_MAX_ATR_MULT=3.5,OB_ZONE_COUNT=3;
 let orderBlock30mCandles=[],orderBlock1hCandles=[];
 let showVuManChu=true;
 const VUMANCHU_PERIOD=23,VUMANCHU_MULTIPLIER=2.5;
+let showFibonacci=true;
+const FIB_PIVOT_LEFT=13,FIB_CONFIRM_BARS=6,FIB_GOLDEN_LOWER=.5,FIB_GOLDEN_UPPER=.618,FIB_ZZ_ATR_MULT=1.5,FIB_EXTEND_BARS=15;
 let currentStrategy='macd-based-rsi';
 let lastReceivedAt=null;
 let chartStateMessage='차트 데이터를 불러오는 중…';
@@ -486,6 +489,77 @@ function calcATR(data,length=10){
   return out;
 }
 
+// Advanced Fibonacci Golden Zone [HexaTrades] (Pine v6 port for canvas).
+// Default display: Golden Zone + confirmed-pivot ZigZag + HH/HL/LH/LL labels.
+function calcAdvancedFibonacci(data){
+  const atr=calcATR(data,14),candidates=[];
+  for(let confirm=FIB_PIVOT_LEFT+FIB_CONFIRM_BARS;confirm<data.length;confirm++){
+    const pivot=confirm-FIB_CONFIRM_BARS,c=data[pivot];let isHigh=true,isLow=true;
+    for(let j=pivot-FIB_PIVOT_LEFT;j<=pivot+FIB_CONFIRM_BARS;j++){
+      if(j===pivot)continue;
+      if(data[j].high>=c.high)isHigh=false;
+      if(data[j].low<=c.low)isLow=false;
+    }
+    if(isHigh&&isLow)continue;
+    if(isHigh)candidates.push({index:pivot,confirmIndex:confirm,price:c.high,type:'high'});
+    else if(isLow)candidates.push({index:pivot,confirmIndex:confirm,price:c.low,type:'low'});
+  }
+  const points=[];
+  candidates.forEach(p=>{
+    const last=points[points.length-1];
+    if(!last){points.push({...p});return;}
+    if(last.type===p.type){
+      const moreExtreme=p.type==='high'?p.price>last.price:p.price<last.price;
+      if(moreExtreme)points[points.length-1]={...p};
+      return;
+    }
+    const threshold=FIB_ZZ_ATR_MULT*(atr[p.index]||0);
+    if(Math.abs(p.price-last.price)>=threshold)points.push({...p});
+  });
+  let previousHigh=null,previousLow=null;
+  points.forEach(p=>{
+    if(p.type==='high'){p.structure=previousHigh==null||p.price>previousHigh?'HH':'LH';previousHigh=p.price;}
+    else{p.structure=previousLow==null||p.price<previousLow?'LL':'HL';previousLow=p.price;}
+  });
+  const zones=[];
+  for(let i=1;i<points.length;i++){
+    const start=points[i-1],end=points[i],bull=end.type==='high',high=Math.max(start.price,end.price),low=Math.min(start.price,end.price),range=high-low;
+    if(range<=0)continue;
+    const nearRatio=Math.min(FIB_GOLDEN_LOWER,FIB_GOLDEN_UPPER),near=bull?high-nearRatio*range:low+nearRatio*range;
+    const scan=data.slice(end.index,Math.min(data.length,end.confirmIndex+1));
+    const late=bull?scan.some(c=>c.low<=near):scan.some(c=>c.high>=near);
+    if(late)continue;
+    const a=bull?high-FIB_GOLDEN_LOWER*range:low+FIB_GOLDEN_LOWER*range;
+    const b=bull?high-FIB_GOLDEN_UPPER*range:low+FIB_GOLDEN_UPPER*range;
+    zones.push({bull,startIndex:Math.min(start.index,end.index),bornIndex:end.confirmIndex,top:Math.max(a,b),bottom:Math.min(a,b),endIndex:i<points.length-1?points[i+1].confirmIndex:null});
+  }
+  return{points,zones};
+}
+
+function drawAdvancedFibonacci(ctx,result,layout,yOf){
+  const{W,H,startIdx,n,xOf}=layout,axisEnd=W-PAD_R+4,step=layout.cw+layout.gap;
+  const xAt=index=>index<=startIdx?PAD_L:index>=n?axisEnd:xOf(index);
+  ctx.save();ctx.beginPath();ctx.rect(PAD_L,PAD_T,axisEnd-PAD_L,H-PAD_T-PAD_B);ctx.clip();
+  result.zones.slice(-8).forEach((zone,zi,arr)=>{
+    if(zone.bornIndex>=n||zone.endIndex!=null&&zone.endIndex<startIdx)return;
+    const active=zi===arr.length-1&&zone.endIndex==null,left=xAt(zone.startIndex);
+    const right=active?Math.min(axisEnd,xOf(n-1)+step*FIB_EXTEND_BARS):xAt(zone.endIndex);
+    const top=yOf(zone.top),bottom=yOf(zone.bottom),base=zone.bull?'22,163,74':'220,38,38';
+    ctx.fillStyle=`rgba(${base},${active ? .18 : .08})`;ctx.fillRect(left,top,Math.max(2,right-left),bottom-top);
+    ctx.strokeStyle=`rgba(${base},${active ? .62 : .28})`;ctx.lineWidth=1;ctx.strokeRect(left,top,Math.max(2,right-left),bottom-top);
+    if(active&&right-left>90){ctx.fillStyle=`rgba(${base},.9)`;ctx.font='bold 10px monospace';ctx.textAlign='left';ctx.fillText(zone.bull?'GOLDEN ZONE ▲':'GOLDEN ZONE ▼',left+5,(top+bottom)/2+3);}
+  });
+  ctx.strokeStyle='rgba(37,99,235,.88)';ctx.lineWidth=1;ctx.lineJoin='round';ctx.beginPath();let started=false;
+  result.points.forEach(p=>{if(p.index<startIdx-1)return;const x=xAt(p.index),y=yOf(p.price);if(!started){ctx.moveTo(x,y);started=true;}else ctx.lineTo(x,y);});
+  if(started)ctx.stroke();ctx.restore();
+  result.points.forEach(p=>{
+    if(p.index<startIdx||p.index>=n)return;
+    const x=xOf(p.index),isHigh=p.type==='high',y=yOf(p.price)+(isHigh?-13:16),bg=isHigh?'rgba(220,38,38,.72)':'rgba(13,148,136,.72)';
+    ctx.font='bold 9px monospace';ctx.textAlign='center';const w=ctx.measureText(p.structure).width+7;
+    ctx.fillStyle=bg;ctx.fillRect(x-w/2,y-10,w,14);ctx.fillStyle='#fff';ctx.fillText(p.structure,x,y);
+  });
+}
+
 function calcOrderBlocks(data,swingLength=10){
   if(data.length<swingLength+3)return{bull:[],bear:[]};
   const atr=calcATR(data,10),bull=[],bear=[];let swingType=0,top=null,bottom=null;
@@ -567,6 +641,7 @@ function drawMain(){
   }
   const maLines={};MA_P.forEach(p=>{maLines[p]=calcMA(candles,p);});
   const vuManChu=showVuManChu?calcVuManChuSwing(candles,VUMANCHU_PERIOD,VUMANCHU_MULTIPLIER):null;
+  const fibonacci=showFibonacci?calcAdvancedFibonacci(candles):null;
   const visCan=candles.slice(startIdx);
   let hi=-Infinity,lo=Infinity;
   visCan.forEach(c=>{hi=Math.max(hi,c.high);lo=Math.min(lo,c.low);});
@@ -626,6 +701,7 @@ function drawMain(){
   if(showOrderBlocks&&curInterval==='1h'&&orderBlock30mCandles.length)drawOrderBlocks(ctx,calcOrderBlocks(orderBlock30mCandles,OB_SWING_LENGTH),{W,startIdx,n,xOf},yOf,'30분봉',true);
   if(showOrderBlocks&&curInterval==='4h'&&orderBlock1hCandles.length)drawOrderBlocks(ctx,calcOrderBlocks(orderBlock1hCandles,OB_SWING_LENGTH),{W,startIdx,n,xOf},yOf,'1시간봉',true);
   if(vuManChu)drawVuManChuSwing(ctx,vuManChu,{startIdx,n,xOf},yOf);
+  if(fibonacci)drawAdvancedFibonacci(ctx,fibonacci,{W,H,startIdx,n,xOf,cw,gap},yOf);
   MA_P.forEach(p=>{
     const vals=maLines[p];ctx.beginPath();ctx.strokeStyle=MA_C[p];ctx.lineWidth=MA_W[p];ctx.lineJoin='round';ctx.setLineDash([]);
     let s=false;for(let i=startIdx;i<n;i++){const v=vals[i];if(v==null)continue;if(!s){ctx.moveTo(xOf(i),yOf(v));s=true;}else ctx.lineTo(xOf(i),yOf(v));}ctx.stroke();
@@ -919,6 +995,12 @@ document.getElementById('orderBlockToggle').addEventListener('change',e=>{
 document.getElementById('vumanchuToggle').addEventListener('change',e=>{
   showVuManChu=e.target.checked;
   document.getElementById('vumanchuToggleLabel').classList.toggle('active',showVuManChu);
+  drawMain();
+});
+
+document.getElementById('fibonacciToggle').addEventListener('change',e=>{
+  showFibonacci=e.target.checked;
+  document.getElementById('fibonacciToggleLabel').classList.toggle('active',showFibonacci);
   drawMain();
 });
 
