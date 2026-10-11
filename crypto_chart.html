@@ -23,9 +23,9 @@ html,body{width:100%;height:100%;background:#fff;overflow:hidden;}
 #fractalsToggleLabel{display:flex;align-items:center;gap:5px;padding:3px 8px;border:1px solid var(--border);border-radius:4px;background:#f2fbfa;color:var(--text);font-size:11px;font-family:monospace;cursor:pointer;white-space:nowrap;}
 #fractalsToggle{width:14px;height:14px;accent-color:#009688;cursor:pointer;}
 #fractalsToggleLabel.active{border-color:#009688;background:#e4f7f4;}
-#orderBlockToggleLabel,#fibonacciToggleLabel{display:flex;align-items:center;gap:5px;padding:3px 8px;border:1px solid #9fabc0;border-radius:4px;background:#eef3f7;color:var(--text);font-size:11px;font-family:monospace;cursor:pointer;white-space:nowrap;}
-#orderBlockToggle,#fibonacciToggle{width:14px;height:14px;accent-color:#089981;cursor:pointer;}
-#orderBlockToggleLabel.active,#fibonacciToggleLabel.active{border-color:#089981;background:#e1f3ef;}
+#orderBlockToggleLabel,#pvBreakoutToggleLabel{display:flex;align-items:center;gap:5px;padding:3px 8px;border:1px solid #9fabc0;border-radius:4px;background:#eef3f7;color:var(--text);font-size:11px;font-family:monospace;cursor:pointer;white-space:nowrap;}
+#orderBlockToggle,#pvBreakoutToggle{width:14px;height:14px;accent-color:#089981;cursor:pointer;}
+#orderBlockToggleLabel.active,#pvBreakoutToggleLabel.active{border-color:#089981;background:#e1f3ef;}
 #vumanchuToggleLabel{display:flex;align-items:center;gap:5px;padding:3px 8px;border:1px solid #9fabc0;border-radius:4px;background:#eef3f7;color:var(--text);font-size:11px;font-family:monospace;cursor:pointer;white-space:nowrap;}
 #vumanchuToggle{width:14px;height:14px;accent-color:#089981;cursor:pointer;}
 #vumanchuToggleLabel.active{border-color:#089981;background:#e1f3ef;}
@@ -156,7 +156,7 @@ html,body{width:100%;height:100%;background:#fff;overflow:hidden;}
       <label id="fractalsToggleLabel" class="active" title="Williams Fractals · Periods 2"><input id="fractalsToggle" type="checkbox" checked>Williams Fractals</label>
       <label id="orderBlockToggleLabel" class="active" title="Volumized Order Blocks · Swing Length 10"><input id="orderBlockToggle" type="checkbox" checked>Order Block</label>
       <label id="vumanchuToggleLabel" class="active" title="Range Filter · Period 23 · Multiplier 2.5"><input id="vumanchuToggle" type="checkbox" checked>VuManChu Swing</label>
-      <label id="fibonacciToggleLabel" class="active" title="Advanced Fibonacci Golden Zone · Pivot 13/6"><input id="fibonacciToggle" type="checkbox" checked>Fibonacci</label>
+      <label id="pvBreakoutToggleLabel" title="Price/Volume Breakout · Price 60 · Volume 60 · SMA 200 · Long"><input id="pvBreakoutToggle" type="checkbox">P V Breakout</label>
       <select id="strategySelect" aria-label="매매전략 선택">
         <option value="none">매매전략 선택</option>
         <option value="macd-based-rsi" selected>1. MACD, RSI 적용</option>
@@ -221,8 +221,8 @@ const OB_SWING_LENGTH=10,OB_MAX_ATR_MULT=3.5,OB_ZONE_COUNT=3;
 let orderBlock30mCandles=[],orderBlock1hCandles=[];
 let showVuManChu=true;
 const VUMANCHU_PERIOD=23,VUMANCHU_MULTIPLIER=2.5;
-let showFibonacci=true;
-const FIB_PIVOT_LEFT=13,FIB_CONFIRM_BARS=6,FIB_GOLDEN_LOWER=.5,FIB_GOLDEN_UPPER=.618,FIB_ZZ_ATR_MULT=1.5,FIB_EXTEND_BARS=15;
+let showPVBreakout=false;
+const PVB_PRICE_PERIOD=60,PVB_VOLUME_PERIOD=60,PVB_TREND_LENGTH=200,PVB_ORDER_DIRECTION='Long';
 let currentStrategy='macd-based-rsi';
 let lastReceivedAt=null;
 let chartStateMessage='차트 데이터를 불러오는 중…';
@@ -476,74 +476,51 @@ function calcATR(data,length=10){
   return out;
 }
 
-// Advanced Fibonacci Golden Zone [HexaTrades] (Pine v6 port for canvas).
-// Default display: Golden Zone + confirmed-pivot ZigZag + HH/HL/LH/LL labels.
-function calcAdvancedFibonacci(data){
-  const atr=calcATR(data,14),candidates=[];
-  for(let confirm=FIB_PIVOT_LEFT+FIB_CONFIRM_BARS;confirm<data.length;confirm++){
-    const pivot=confirm-FIB_CONFIRM_BARS,c=data[pivot];let isHigh=true,isLow=true;
-    for(let j=pivot-FIB_PIVOT_LEFT;j<=pivot+FIB_CONFIRM_BARS;j++){
-      if(j===pivot)continue;
-      if(data[j].high>=c.high)isHigh=false;
-      if(data[j].low<=c.low)isLow=false;
+// Price and Volume Breakout Buy Strategy [TradeDots] (MPL-2.0 Pine v5 port).
+function calcPVBreakout(data){
+  const sma=calcMA(data,PVB_TREND_LENGTH),signals=[],levels=[];
+  let position=null;
+  for(let i=0;i<data.length;i++){
+    if(i<Math.max(PVB_PRICE_PERIOD,PVB_VOLUME_PERIOD)||sma[i]==null)continue;
+    const previous=data.slice(i-PVB_PRICE_PERIOD,i);
+    const priceHighest=Math.max(...previous.map(c=>c.high));
+    const priceLowest=Math.min(...previous.map(c=>c.low));
+    const volumeHighest=Math.max(...data.slice(i-PVB_VOLUME_PERIOD,i).map(c=>c.volume));
+    const longEntry=data[i].close>priceHighest&&data[i].volume>volumeHighest&&data[i].close>sma[i]&&position==null&&PVB_ORDER_DIRECTION!=='Short';
+    const shortEntry=data[i].close<priceLowest&&data[i].volume>volumeHighest&&data[i].close<sma[i]&&position==null&&PVB_ORDER_DIRECTION!=='Long';
+    if(longEntry){position='long';signals.push({index:i,type:'long-entry'});levels.push({from:i-PVB_PRICE_PERIOD,to:i,price:priceHighest,type:'long'});continue;}
+    if(shortEntry){position='short';signals.push({index:i,type:'short-entry'});levels.push({from:i-PVB_PRICE_PERIOD,to:i,price:priceLowest,type:'short'});continue;}
+    if(position==='long'&&i>=4&&[0,1,2,3,4].every(offset=>sma[i-offset]!=null&&data[i-offset].close<sma[i-offset])){
+      position=null;signals.push({index:i,type:'long-close'});
+    }else if(position==='short'&&i>=4&&[0,1,2,3,4].every(offset=>sma[i-offset]!=null&&data[i-offset].close>sma[i-offset])){
+      position=null;signals.push({index:i,type:'short-close'});
     }
-    if(isHigh&&isLow)continue;
-    if(isHigh)candidates.push({index:pivot,confirmIndex:confirm,price:c.high,type:'high'});
-    else if(isLow)candidates.push({index:pivot,confirmIndex:confirm,price:c.low,type:'low'});
   }
-  const points=[];
-  candidates.forEach(p=>{
-    const last=points[points.length-1];
-    if(!last){points.push({...p});return;}
-    if(last.type===p.type){
-      const moreExtreme=p.type==='high'?p.price>last.price:p.price<last.price;
-      if(moreExtreme)points[points.length-1]={...p};
-      return;
-    }
-    const threshold=FIB_ZZ_ATR_MULT*(atr[p.index]||0);
-    if(Math.abs(p.price-last.price)>=threshold)points.push({...p});
-  });
-  let previousHigh=null,previousLow=null;
-  points.forEach(p=>{
-    if(p.type==='high'){p.structure=previousHigh==null||p.price>previousHigh?'HH':'LH';previousHigh=p.price;}
-    else{p.structure=previousLow==null||p.price<previousLow?'LL':'HL';previousLow=p.price;}
-  });
-  const zones=[];
-  for(let i=1;i<points.length;i++){
-    const start=points[i-1],end=points[i],bull=end.type==='high',high=Math.max(start.price,end.price),low=Math.min(start.price,end.price),range=high-low;
-    if(range<=0)continue;
-    const nearRatio=Math.min(FIB_GOLDEN_LOWER,FIB_GOLDEN_UPPER),near=bull?high-nearRatio*range:low+nearRatio*range;
-    const scan=data.slice(end.index,Math.min(data.length,end.confirmIndex+1));
-    const late=bull?scan.some(c=>c.low<=near):scan.some(c=>c.high>=near);
-    if(late)continue;
-    const a=bull?high-FIB_GOLDEN_LOWER*range:low+FIB_GOLDEN_LOWER*range;
-    const b=bull?high-FIB_GOLDEN_UPPER*range:low+FIB_GOLDEN_UPPER*range;
-    zones.push({bull,startIndex:Math.min(start.index,end.index),bornIndex:end.confirmIndex,top:Math.max(a,b),bottom:Math.min(a,b),endIndex:i<points.length-1?points[i+1].confirmIndex:null});
-  }
-  return{points,zones};
+  return{sma,signals,levels,position};
 }
 
-function drawAdvancedFibonacci(ctx,result,layout,yOf){
-  const{W,H,startIdx,n,xOf}=layout,axisEnd=W-PAD_R+4,step=layout.cw+layout.gap;
-  const xAt=index=>index<=startIdx?PAD_L:index>=n?axisEnd:xOf(index);
-  ctx.save();ctx.beginPath();ctx.rect(PAD_L,PAD_T,axisEnd-PAD_L,H-PAD_T-PAD_B);ctx.clip();
-  result.zones.slice(-8).forEach((zone,zi,arr)=>{
-    if(zone.bornIndex>=n||zone.endIndex!=null&&zone.endIndex<startIdx)return;
-    const active=zi===arr.length-1&&zone.endIndex==null,left=xAt(zone.startIndex);
-    const right=active?Math.min(axisEnd,xOf(n-1)+step*FIB_EXTEND_BARS):xAt(zone.endIndex);
-    const top=yOf(zone.top),bottom=yOf(zone.bottom),base=zone.bull?'22,163,74':'220,38,38';
-    ctx.fillStyle=`rgba(${base},${active ? .18 : .08})`;ctx.fillRect(left,top,Math.max(2,right-left),bottom-top);
-    ctx.strokeStyle=`rgba(${base},${active ? .62 : .28})`;ctx.lineWidth=1;ctx.strokeRect(left,top,Math.max(2,right-left),bottom-top);
-    if(active&&right-left>90){ctx.fillStyle=`rgba(${base},.9)`;ctx.font='bold 10px monospace';ctx.textAlign='left';ctx.fillText(zone.bull?'GOLDEN ZONE ▲':'GOLDEN ZONE ▼',left+5,(top+bottom)/2+3);}
+function drawPVBreakoutBase(ctx,result,layout,yOf){
+  const{startIdx,n,xOf}=layout;
+  result.levels.forEach(level=>{
+    if(level.to<startIdx||level.from>=n)return;
+    ctx.beginPath();ctx.moveTo(xOf(Math.max(startIdx,level.from)),yOf(level.price));ctx.lineTo(xOf(Math.min(n-1,level.to)),yOf(level.price));
+    ctx.strokeStyle=level.type==='long'?'#9cff87':'#f9396a';ctx.lineWidth=2;ctx.stroke();
   });
-  ctx.strokeStyle='rgba(37,99,235,.88)';ctx.lineWidth=1;ctx.lineJoin='round';ctx.beginPath();let started=false;
-  result.points.forEach(p=>{if(p.index<startIdx-1)return;const x=xAt(p.index),y=yOf(p.price);if(!started){ctx.moveTo(x,y);started=true;}else ctx.lineTo(x,y);});
-  if(started)ctx.stroke();ctx.restore();
-  result.points.forEach(p=>{
-    if(p.index<startIdx||p.index>=n)return;
-    const x=xOf(p.index),isHigh=p.type==='high',y=yOf(p.price)+(isHigh?-13:16),bg=isHigh?'rgba(220,38,38,.72)':'rgba(13,148,136,.72)';
-    ctx.font='bold 9px monospace';ctx.textAlign='center';const w=ctx.measureText(p.structure).width+7;
-    ctx.fillStyle=bg;ctx.fillRect(x-w/2,y-10,w,14);ctx.fillStyle='#fff';ctx.fillText(p.structure,x,y);
+  ctx.beginPath();ctx.strokeStyle='rgba(74,85,104,.9)';ctx.lineWidth=2;let started=false;
+  for(let i=startIdx;i<n;i++){const v=result.sma[i];if(v==null)continue;if(!started){ctx.moveTo(xOf(i),yOf(v));started=true;}else ctx.lineTo(xOf(i),yOf(v));}
+  if(started)ctx.stroke();
+}
+
+function drawPVBreakoutSignals(ctx,result,layout,yOf){
+  const{startIdx,n,xOf}=layout;
+  result.signals.forEach(signal=>{
+    if(signal.index<startIdx||signal.index>=n)return;
+    const entry=signal.type.endsWith('entry'),longSide=signal.type.startsWith('long');
+    const label=entry?(longSide?'Breakout Buy':'Breakout Sell'):'Close Position';
+    const green=entry?longSide:!longSide,color=green?'#9cff87':'#f9396a';
+    const below=entry?longSide:!longSide,x=xOf(signal.index),anchor=below?yOf(candles[signal.index].low)+18:yOf(candles[signal.index].high)-18;
+    ctx.font='bold 9px monospace';const w=ctx.measureText(label).width+10,h=16;
+    ctx.fillStyle=color;ctx.fillRect(x-w/2,anchor-h/2,w,h);ctx.fillStyle=green?'#17351d':'#fff';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(label,x,anchor+.5);ctx.textBaseline='alphabetic';
   });
 }
 
@@ -628,11 +605,12 @@ function drawMain(){
   }
   const maLines={};MA_P.forEach(p=>{maLines[p]=calcMA(candles,p);});
   const vuManChu=showVuManChu?calcVuManChuSwing(candles,VUMANCHU_PERIOD,VUMANCHU_MULTIPLIER):null;
-  const fibonacci=showFibonacci?calcAdvancedFibonacci(candles):null;
+  const pvBreakout=showPVBreakout?calcPVBreakout(candles):null;
   const visCan=candles.slice(startIdx);
   let hi=-Infinity,lo=Infinity;
   visCan.forEach(c=>{hi=Math.max(hi,c.high);lo=Math.min(lo,c.low);});
   MA_P.forEach(p=>{maLines[p].slice(startIdx).forEach(v=>{if(v!=null){hi=Math.max(hi,v);lo=Math.min(lo,v);}});});
+  if(pvBreakout)pvBreakout.sma.slice(startIdx).forEach(v=>{if(v!=null){hi=Math.max(hi,v);lo=Math.min(lo,v);}});
   const rng=hi-lo||1,hiP=hi+rng*0.06,loP=lo-rng*0.06,prng=hiP-loP;
   const yOf=v=>PAD_T+chartH*(1-(v-loP)/prng);
   const vOfY=y=>loP+prng*(1-(y-PAD_T)/chartH);
@@ -686,13 +664,14 @@ function drawMain(){
   if(showOrderBlocks)drawOrderBlocks(ctx,calcOrderBlocks(candles,OB_SWING_LENGTH),{W,startIdx,n,xOf},yOf);
   if(showOrderBlocks&&curInterval==='1h'&&orderBlock30mCandles.length)drawOrderBlocks(ctx,calcOrderBlocks(orderBlock30mCandles,OB_SWING_LENGTH),{W,startIdx,n,xOf},yOf,'30분봉',true);
   if(showOrderBlocks&&curInterval==='4h'&&orderBlock1hCandles.length)drawOrderBlocks(ctx,calcOrderBlocks(orderBlock1hCandles,OB_SWING_LENGTH),{W,startIdx,n,xOf},yOf,'1시간봉',true);
-  if(fibonacci)drawAdvancedFibonacci(ctx,fibonacci,{W,H,startIdx,n,xOf,cw,gap},yOf);
+  if(pvBreakout)drawPVBreakoutBase(ctx,pvBreakout,{startIdx,n,xOf},yOf);
   MA_P.forEach(p=>{
     const vals=maLines[p];ctx.beginPath();ctx.strokeStyle=MA_C[p];ctx.lineWidth=MA_W[p];ctx.lineJoin='round';ctx.setLineDash([]);
     let s=false;for(let i=startIdx;i<n;i++){const v=vals[i];if(v==null)continue;if(!s){ctx.moveTo(xOf(i),yOf(v));s=true;}else ctx.lineTo(xOf(i),yOf(v));}ctx.stroke();
   });
   visCan.forEach((c,ri)=>{
-    const isUp=c.close>=c.open,col=isUp?UP:DN;
+    const index=startIdx+ri,isUp=c.close>=c.open,trend=showPVBreakout&&pvBreakout?.sma[index]!=null;
+    const col=trend?(c.close>pvBreakout.sma[index]?'#9cff87':'#f9396a'):(isUp?UP:DN);
     const x=PAD_L+ri*(cw+gap),cx=x+cw/2;
     const oY=yOf(c.open),cY=yOf(c.close),hY=yOf(c.high),lY=yOf(c.low);
     const bTop=Math.min(oY,cY),bH=Math.max(1,Math.abs(cY-oY));
@@ -703,6 +682,7 @@ function drawMain(){
     if(cw>=5){ctx.strokeStyle=col;ctx.lineWidth=.5;ctx.strokeRect(x,bTop,cw,bH);}
   });
   if(vuManChu)drawVuManChuSignals(ctx,vuManChu,{startIdx,n,xOf},yOf);
+  if(pvBreakout)drawPVBreakoutSignals(ctx,pvBreakout,{startIdx,n,xOf},yOf);
   if(showFractals){
     const fractals=calcWilliamsFractals(candles,FRACTAL_PERIODS),markerSize=3;
     for(let i=startIdx;i<n;i++){
@@ -983,9 +963,9 @@ document.getElementById('vumanchuToggle').addEventListener('change',e=>{
   drawMain();
 });
 
-document.getElementById('fibonacciToggle').addEventListener('change',e=>{
-  showFibonacci=e.target.checked;
-  document.getElementById('fibonacciToggleLabel').classList.toggle('active',showFibonacci);
+document.getElementById('pvBreakoutToggle').addEventListener('change',e=>{
+  showPVBreakout=e.target.checked;
+  document.getElementById('pvBreakoutToggleLabel').classList.toggle('active',showPVBreakout);
   drawMain();
 });
 
