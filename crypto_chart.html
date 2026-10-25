@@ -23,9 +23,9 @@ html,body{width:100%;height:100%;background:#fff;overflow:hidden;}
 #fractalsToggleLabel{display:flex;align-items:center;gap:5px;padding:3px 8px;border:1px solid var(--border);border-radius:4px;background:#f2fbfa;color:var(--text);font-size:11px;font-family:monospace;cursor:pointer;white-space:nowrap;}
 #fractalsToggle{width:14px;height:14px;accent-color:#009688;cursor:pointer;}
 #fractalsToggleLabel.active{border-color:#009688;background:#e4f7f4;}
-#orderBlockToggleLabel,#pvBreakoutToggleLabel{display:flex;align-items:center;gap:5px;padding:3px 8px;border:1px solid #9fabc0;border-radius:4px;background:#eef3f7;color:var(--text);font-size:11px;font-family:monospace;cursor:pointer;white-space:nowrap;}
-#orderBlockToggle,#pvBreakoutToggle{width:14px;height:14px;accent-color:#089981;cursor:pointer;}
-#orderBlockToggleLabel.active,#pvBreakoutToggleLabel.active{border-color:#089981;background:#e1f3ef;}
+#orderBlockToggleLabel,#pvBreakoutToggleLabel,#crtToggleLabel{display:flex;align-items:center;gap:5px;padding:3px 8px;border:1px solid #9fabc0;border-radius:4px;background:#eef3f7;color:var(--text);font-size:11px;font-family:monospace;cursor:pointer;white-space:nowrap;}
+#orderBlockToggle,#pvBreakoutToggle,#crtToggle{width:14px;height:14px;accent-color:#089981;cursor:pointer;}
+#orderBlockToggleLabel.active,#pvBreakoutToggleLabel.active,#crtToggleLabel.active{border-color:#089981;background:#e1f3ef;}
 #vumanchuToggleLabel{display:flex;align-items:center;gap:5px;padding:3px 8px;border:1px solid #9fabc0;border-radius:4px;background:#eef3f7;color:var(--text);font-size:11px;font-family:monospace;cursor:pointer;white-space:nowrap;}
 #vumanchuToggle{width:14px;height:14px;accent-color:#089981;cursor:pointer;}
 #vumanchuToggleLabel.active{border-color:#089981;background:#e1f3ef;}
@@ -60,8 +60,8 @@ html,body{width:100%;height:100%;background:#fff;overflow:hidden;}
 #pRsi{height:114px;border-top:.5px solid var(--border);}
 #pMacd{height:129px;border-top:.5px solid var(--border);}
 .plabel{position:absolute;top:4px;left:8px;font-size:11px;color:var(--muted);pointer-events:none;z-index:2;font-family:monospace;}
-#tooltip{position:absolute;top:8px;left:8px;background:rgba(255,255,255,0.97);border:1px solid var(--border);border-radius:6px;padding:7px 11px;font-size:12px;font-family:monospace;color:var(--muted);pointer-events:none;display:none;line-height:1.85;z-index:30;max-width:340px;box-shadow:0 3px 12px rgba(20,30,50,.12);}
-#tooltip b{color:var(--text);font-weight:500;}
+#hoverInfo{position:absolute;top:4px;left:8px;right:76px;display:none;align-items:center;gap:11px;flex-wrap:wrap;padding:2px 4px;background:rgba(255,255,255,.82);font-size:11px;font-family:monospace;color:var(--muted);pointer-events:none;z-index:30;line-height:1.35;}
+#hoverInfo b{color:var(--text);font-weight:600;}
 #footer{padding:4px 12px;font-size:11px;color:var(--muted);font-family:monospace;border-top:.5px solid var(--border);flex-shrink:0;}
 #dot{display:inline-block;width:5px;height:5px;border-radius:50%;background:#26a69a;margin-right:4px;animation:pulse 1.5s infinite;}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
@@ -92,7 +92,7 @@ html,body{width:100%;height:100%;background:#fff;overflow:hidden;}
   #pRsi{height:82px;}
   #pMacd{height:92px;}
   .plabel{font-size:9px;top:3px;left:5px;}
-  #tooltip{top:5px;left:5px;right:5px;max-width:none;padding:5px 7px;font-size:10px;line-height:1.55;}
+  #hoverInfo{top:3px;left:5px;right:54px;gap:6px;padding:2px;font-size:9px;}
   #footer{padding:3px 8px;font-size:9px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 }
 
@@ -120,7 +120,7 @@ html,body{width:100%;height:100%;background:#fff;overflow:hidden;}
   #pRsi{height:52px;}
   #pMacd{height:57px;}
   .plabel{top:2px;left:5px;font-size:8px;}
-  #tooltip{top:4px;left:4px;max-width:300px;padding:4px 6px;font-size:9px;line-height:1.4;}
+  #hoverInfo{top:2px;left:4px;right:50px;gap:5px;padding:1px 2px;font-size:8px;}
   #footer{display:none;}
 }
 </style>
@@ -140,6 +140,7 @@ html,body{width:100%;height:100%;background:#fff;overflow:hidden;}
       <select id="intervalSelect" aria-label="차트 시간봉 선택">
         <option value="1m">1분봉</option>
         <option value="5m">5분봉</option>
+        <option value="15m">15분봉</option>
         <option value="30m">30분봉</option>
         <option value="1h" selected>1시간봉</option>
         <option value="4h">4시간봉</option>
@@ -155,8 +156,9 @@ html,body{width:100%;height:100%;background:#fff;overflow:hidden;}
       </select>
       <label id="fractalsToggleLabel" class="active" title="Williams Fractals · Periods 2"><input id="fractalsToggle" type="checkbox" checked>Williams Fractals</label>
       <label id="orderBlockToggleLabel" class="active" title="Volumized Order Blocks · Swing Length 10"><input id="orderBlockToggle" type="checkbox" checked>Order Block</label>
-      <label id="vumanchuToggleLabel" class="active" title="Range Filter · Period 23 · Multiplier 2.5"><input id="vumanchuToggle" type="checkbox" checked>VuManChu Swing</label>
+      <label id="vumanchuToggleLabel" title="Range Filter · Period 23 · Multiplier 2.5"><input id="vumanchuToggle" type="checkbox">VuManChu Swing</label>
       <label id="pvBreakoutToggleLabel" title="Price/Volume Breakout · Price 60 · Volume 60 · SMA 200 · Long"><input id="pvBreakoutToggle" type="checkbox">P V Breakout</label>
+      <label id="crtToggleLabel" class="active" title="전체 시간봉 CRT · 반대색 확정봉 한쪽 Sweep 후 이전봉 몸통 내 종가"><input id="crtToggle" type="checkbox" checked>CRT</label>
       <select id="strategySelect" aria-label="매매전략 선택">
         <option value="none">매매전략 선택</option>
         <option value="macd-based-rsi" selected>1. MACD, RSI 적용</option>
@@ -195,7 +197,7 @@ html,body{width:100%;height:100%;background:#fff;overflow:hidden;}
   <div id="charts">
     <div class="panel" id="pMain" style="position:relative;">
       <canvas id="cvMain" aria-label="메인 캔들차트"></canvas>
-      <div id="tooltip"></div>
+      <div id="hoverInfo" aria-live="polite"></div>
     </div>
     <div class="panel" id="pVol"><canvas id="cvVol"></canvas><div class="plabel">VOL</div></div>
     <div class="panel" id="pRsi"><canvas id="cvRsi"></canvas><div class="plabel" id="rsiLabel">RSI(14)</div></div>
@@ -213,16 +215,17 @@ const MA_P=[10,20,50];
 const BG='#ffffff',GRID='rgba(32,37,54,0.09)',TEXT='rgba(54,63,83,0.68)';
 let candles=[],ws=null,curSym='BTCUSDT',curDp=0;
 let curInterval='1h';
-const INTERVAL_LABELS={'1m':'1분봉','5m':'5분봉','30m':'30분봉','1h':'1시간봉','4h':'4시간봉','1d':'일봉','1w':'주봉'};
+const INTERVAL_LABELS={'1m':'1분봉','5m':'5분봉','15m':'15분봉','30m':'30분봉','1h':'1시간봉','4h':'4시간봉','1d':'일봉','1w':'주봉'};
 let showFractals=true;
 const FRACTAL_PERIODS=2;
 let showOrderBlocks=true;
 const OB_SWING_LENGTH=10,OB_MAX_ATR_MULT=3.5,OB_ZONE_COUNT=3;
-let orderBlock30mCandles=[],orderBlock1hCandles=[];
-let showVuManChu=true;
+let orderBlock15mCandles=[],orderBlock30mCandles=[];
+let showVuManChu=false;
 const VUMANCHU_PERIOD=23,VUMANCHU_MULTIPLIER=2.5;
 let showPVBreakout=false;
 const PVB_PRICE_PERIOD=60,PVB_VOLUME_PERIOD=60,PVB_TREND_LENGTH=200,PVB_ORDER_DIRECTION='Long';
+let showCRT=true;
 let currentStrategy='macd-based-rsi';
 let lastReceivedAt=null;
 let chartStateMessage='차트 데이터를 불러오는 중…';
@@ -262,6 +265,7 @@ function resize(){
 
 function fmt(n,d){d=(d!=null?d:curDp);return Number(n).toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d});}
 function fmtVol(n){if(n>=1e9)return(n/1e9).toFixed(2)+'B';if(n>=1e6)return(n/1e6).toFixed(2)+'M';if(n>=1e3)return(n/1e3).toFixed(1)+'K';return n.toFixed(0);}
+function fmtMACD(n){if(n==null||!Number.isFinite(n))return'--';const value=n.toFixed(1);return value==='-0.0'?'0.0':value;}
 function fmtDate(ts){const d=new Date(ts);return(d.getMonth()+1)+'/'+d.getDate()+' '+String(d.getHours()).padStart(2,'0')+':00';}
 function fmtDateFile(ts){const d=new Date(ts);return d.getFullYear()+('0'+(d.getMonth()+1)).slice(-2)+('0'+d.getDate()).slice(-2)+'_'+('0'+d.getHours()).slice(-2)+('0'+d.getMinutes()).slice(-2);}
 
@@ -466,6 +470,35 @@ function calcWilliamsFractals(data,n=2){
   return{up,down};
 }
 
+function calcCRT(data){
+  const signals=[];
+  for(let i=1;i<data.length;i++){
+    const reference=data[i-1],current=data[i];
+    if(current.closed!==true)continue;
+    const previousBearish=reference.close<reference.open,currentBullish=current.close>current.open;
+    const previousBullish=reference.close>reference.open,currentBearish=current.close<current.open;
+    const bodyLow=Math.min(reference.open,reference.close),bodyHigh=Math.max(reference.open,reference.close);
+    const closeInsidePreviousBody=current.close>=bodyLow&&current.close<=bodyHigh;
+    const bullish=previousBearish&&currentBullish&&current.low<reference.low&&current.high<reference.high&&closeInsidePreviousBody;
+    const bearish=previousBullish&&currentBearish&&current.high>reference.high&&current.low>reference.low&&closeInsidePreviousBody;
+    if(bullish)signals.push({index:i,type:'bullish'});
+    else if(bearish)signals.push({index:i,type:'bearish'});
+  }
+  return signals;
+}
+
+function drawCRTSignals(ctx,signals,layout,yOf){
+  const{startIdx,n,xOf}=layout;
+  signals.forEach(signal=>{
+    if(signal.index<startIdx||signal.index>=n)return;
+    const bullish=signal.type==='bullish',c=candles[signal.index],x=xOf(signal.index);
+    const color=bullish?'#00897b':'#e53935';
+    const y=bullish?Math.min(cvs.main.height-PAD_B-7,yOf(c.low)+17):Math.max(PAD_T+7,yOf(c.high)-17);
+    ctx.fillStyle=color;ctx.font='bold 15px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText('●',x,y);ctx.textBaseline='alphabetic';
+  });
+}
+
 function calcATR(data,length=10){
   const out=new Array(data.length).fill(null);let rma=null;
   for(let i=0;i<data.length;i++){
@@ -581,7 +614,7 @@ function drawOrderBlocks(ctx,blocks,layout,yOf,timeframeLabel=INTERVAL_LABELS[cu
     const top=yOf(ob.top),bottom=yOf(ob.bottom),height=Math.max(1,bottom-top),isBull=ob.type==='Bull';
     const base=isBull?'8,153,129':'242,54,70',alpha=ob.breaker?.12:.22;
     ctx.fillStyle=`rgba(${base},${alpha})`;ctx.fillRect(left,top,right-left,height);
-    ctx.strokeStyle=`rgba(${base},${ob.breaker?.35:.72})`;ctx.lineWidth=isLowerTimeframe?1.5:1;ctx.setLineDash(isLowerTimeframe?[2,2]:(ob.breaker?[4,3]:[]));ctx.strokeRect(left,top,right-left,height);ctx.setLineDash([]);
+    ctx.strokeStyle=`rgba(${base},${ob.breaker?.35:.72})`;ctx.lineWidth=isLowerTimeframe?1.5:1;ctx.setLineDash(isLowerTimeframe?[2,2]:[]);ctx.strokeRect(left,top,right-left,height);ctx.setLineDash([]);
     const volWidth=Math.min((right-left)/3,90),total=Math.max(ob.volume,1),highRatio=ob.highVolume/total;
     ctx.fillStyle='rgba(8,153,129,.38)';ctx.fillRect(left,top,volWidth*highRatio,height/2);
     ctx.fillStyle='rgba(242,54,70,.38)';ctx.fillRect(left,top+height/2,volWidth*(1-highRatio),height/2);
@@ -662,8 +695,8 @@ function drawMain(){
     });
   }
   if(showOrderBlocks)drawOrderBlocks(ctx,calcOrderBlocks(candles,OB_SWING_LENGTH),{W,startIdx,n,xOf},yOf);
+  if(showOrderBlocks&&(curInterval==='30m'||curInterval==='4h')&&orderBlock15mCandles.length)drawOrderBlocks(ctx,calcOrderBlocks(orderBlock15mCandles,OB_SWING_LENGTH),{W,startIdx,n,xOf},yOf,'15분봉',true);
   if(showOrderBlocks&&curInterval==='1h'&&orderBlock30mCandles.length)drawOrderBlocks(ctx,calcOrderBlocks(orderBlock30mCandles,OB_SWING_LENGTH),{W,startIdx,n,xOf},yOf,'30분봉',true);
-  if(showOrderBlocks&&curInterval==='4h'&&orderBlock1hCandles.length)drawOrderBlocks(ctx,calcOrderBlocks(orderBlock1hCandles,OB_SWING_LENGTH),{W,startIdx,n,xOf},yOf,'1시간봉',true);
   if(pvBreakout)drawPVBreakoutBase(ctx,pvBreakout,{startIdx,n,xOf},yOf);
   MA_P.forEach(p=>{
     const vals=maLines[p];ctx.beginPath();ctx.strokeStyle=MA_C[p];ctx.lineWidth=MA_W[p];ctx.lineJoin='round';ctx.setLineDash([]);
@@ -683,6 +716,7 @@ function drawMain(){
   });
   if(vuManChu)drawVuManChuSignals(ctx,vuManChu,{startIdx,n,xOf},yOf);
   if(pvBreakout)drawPVBreakoutSignals(ctx,pvBreakout,{startIdx,n,xOf},yOf);
+  if(showCRT)drawCRTSignals(ctx,calcCRT(candles),{startIdx,n,xOf},yOf);
   if(showFractals){
     const fractals=calcWilliamsFractals(candles,FRACTAL_PERIODS),markerSize=3;
     for(let i=startIdx;i<n;i++){
@@ -880,9 +914,9 @@ function drawMacd(){
   const lM=macdLine[n-1],lS=sigLine[n-1],lH=hist[n-1],lcs=crossState[n-1];
   const lMCol=macdLineColor(lcs);
   if(lM!=null)document.getElementById('macdLabel').innerHTML=
-    `MACD <span style="color:${lMCol}">${lM.toFixed(1)}</span> `+
-    `SIG <span style="color:${lMCol};opacity:.7">${lS!=null?lS.toFixed(1):'--'}</span> `+
-    `HIST <span style="color:${lH>=0?UP:DN}">${lH!=null?lH.toFixed(1):'--'}</span>`+
+    `MACD <span style="color:${lMCol}">${fmtMACD(lM)}</span> `+
+    `SIG <span style="color:${lMCol};opacity:.7">${fmtMACD(lS)}</span> `+
+    `HIST <span style="color:${lH>=0?UP:DN}">${fmtMACD(lH)}</span>`+
     (lcs==='gold'?` <span style="color:${MACD_GOLD}">▲골든</span>`:lcs==='dead'?` <span style="color:${MACD_DEAD}">▼데드</span>`:'');
   if(hover&&mX>=PAD_L&&mX<=W-PAD_R){
     const ri=Math.max(0,Math.min(visN-1,Math.round((mX-PAD_L)/(cw+gap))));
@@ -898,28 +932,28 @@ function drawMacd(){
 
 function drawAll(){drawMain();drawVol();drawRsi();drawMacd();}
 
-function updateTooltip(){
+function updateHoverInfo(){
   const L=cvs.main._layout;if(!L||!candles.length)return;
   const ri=Math.max(0,Math.min(L.visN-1,Math.round((mX-PAD_L)/(L.cw+L.gap))));
   const i=L.startIdx+ri;const c=candles[i];if(!c)return;
   const isUp=c.close>=c.open,col=isUp?UP:DN,pct=((c.close-c.open)/c.open*100).toFixed(2);
-  const maV=MA_P.map(p=>{const v=L.maLines[p][i];return v!=null?`<span style="color:${MA_C[p]}">MA${p}</span>&nbsp;<b>$${fmt(v,0)}</b>`:null;}).filter(Boolean).join('&nbsp;');
   const rsiArr=cvs.rsi._rsi,rsiV=rsiArr?rsiArr[i]:null;
   const rsiCol=rsiV!=null?(rsiV>=50?RSI_UP:RSI_DN):'#aaa';
   const md=cvs.macd._data;
-  const mV=md?md.macdLine[i]:null,sV=md?md.sigLine[i]:null,hV=md?md.hist[i]:null;
+  const mV=md?md.macdLine[i]:null;
   const cs=md?md.crossState[i]:null;
   const macdCol=cs==='gold'?MACD_GOLD:cs==='dead'?MACD_DEAD:'#8090b0';
-  const tip=document.getElementById('tooltip');
-  tip.style.display='block';
-  tip.innerHTML=`<b>${fmtDate(c.time)}</b><br>`+
-    `시가&nbsp;<b>$${fmt(c.open)}</b>&nbsp;종가&nbsp;<b style="color:${col}">$${fmt(c.close)}</b><br>`+
-    `고가&nbsp;<b>$${fmt(c.high)}</b>&nbsp;저가&nbsp;<b>$${fmt(c.low)}</b><br>`+
-    `변동&nbsp;<b style="color:${col}">${isUp?'+':''}${pct}%</b>&nbsp;거래량&nbsp;<b>${fmtVol(c.volume)}</b>`+
-    (maV?`<br>${maV}`:'')+
-    (rsiV!=null?`<br><span style="color:${rsiCol}">RSI</span>&nbsp;<b style="color:${rsiCol}">${rsiV.toFixed(1)}</b>`:'')+
-    (mV!=null?`&nbsp;<span style="color:${macdCol}">MACD</span>&nbsp;<b>${mV.toFixed(1)}</b>&nbsp;SIG&nbsp;<b>${sV.toFixed(1)}</b>&nbsp;HIST&nbsp;<b style="color:${hV>=0?UP:DN}">${hV.toFixed(1)}</b>`+
-    (cs==='gold'?`&nbsp;<span style="color:${MACD_GOLD}">▲골든</span>`:cs==='dead'?`&nbsp;<span style="color:${MACD_DEAD}">▼데드</span>`:''):'');
+  const info=document.getElementById('hoverInfo');
+  info.style.display='flex';
+  info.innerHTML=
+    `<span>거래량 <b>${fmtVol(c.volume)}</b></span>`+
+    `<span style="color:${rsiCol}">RSI <b style="color:${rsiCol}">${rsiV!=null?rsiV.toFixed(1):'--'}</b></span>`+
+    `<span style="color:${macdCol}">MACD <b style="color:${macdCol}">${fmtMACD(mV)}</b></span>`+
+    `<span>시가 <b>$${fmt(c.open)}</b></span>`+
+    `<span>고가 <b>$${fmt(c.high)}</b></span>`+
+    `<span>저가 <b>$${fmt(c.low)}</b></span>`+
+    `<span>종가 <b style="color:${col}">$${fmt(c.close)}</b></span>`+
+    `<span><b style="color:${col}">${isUp?'+':''}${pct}%</b></span>`;
 }
 
 [cvs.main,cvs.vol,cvs.rsi,cvs.macd].forEach(cv=>{
@@ -927,9 +961,9 @@ function updateTooltip(){
     const mainRect=cvs.main.getBoundingClientRect();
     mX=e.clientX-mainRect.left;
     mY=cv===cvs.main?e.clientY-cvs.main.getBoundingClientRect().top:cvs.main.clientHeight/2;
-    hover=true;updateTooltip();drawAll();
+    hover=true;updateHoverInfo();drawAll();
   });
-  cv.addEventListener('mouseleave',()=>{hover=false;mX=-1;mY=-1;document.getElementById('tooltip').style.display='none';drawAll();});
+  cv.addEventListener('mouseleave',()=>{hover=false;mX=-1;mY=-1;document.getElementById('hoverInfo').style.display='none';drawAll();});
 });
 
 document.querySelectorAll('.symBtn').forEach(btn=>{
@@ -966,6 +1000,12 @@ document.getElementById('vumanchuToggle').addEventListener('change',e=>{
 document.getElementById('pvBreakoutToggle').addEventListener('change',e=>{
   showPVBreakout=e.target.checked;
   document.getElementById('pvBreakoutToggleLabel').classList.toggle('active',showPVBreakout);
+  drawMain();
+});
+
+document.getElementById('crtToggle').addEventListener('change',e=>{
+  showCRT=e.target.checked;
+  document.getElementById('crtToggleLabel').classList.toggle('active',showCRT);
   drawMain();
 });
 
@@ -1040,12 +1080,12 @@ async function fetchCandles(){
     const requestedSymbol=curSym,requestedInterval=curInterval;
     const data=await fetchBinanceKlines(requestedSymbol,requestedInterval,300);
     if(requestedSymbol!==curSym||requestedInterval!==curInterval)return;
-    candles=data.map(d=>({time:+d[0],open:+d[1],high:+d[2],low:+d[3],close:+d[4],volume:+d[5]}));
+    candles=data.map(d=>({time:+d[0],open:+d[1],high:+d[2],low:+d[3],close:+d[4],volume:+d[5],closed:+d[6]<Date.now()}));
     chartStateMessage='';
     clearTimeout(candleRetryTimer);candleRetryTimer=null;
-    orderBlock30mCandles=[];orderBlock1hCandles=[];
+    orderBlock15mCandles=[];orderBlock30mCandles=[];
+    if(requestedInterval==='30m'||requestedInterval==='4h')await fetchOrderBlock15m(requestedSymbol);
     if(requestedInterval==='1h')await fetchOrderBlock30m(requestedSymbol);
-    if(requestedInterval==='4h')await fetchOrderBlock1h(requestedSymbol);
     markDataReceived();
     updateStats();
     drawAll();
@@ -1056,6 +1096,14 @@ async function fetchCandles(){
   }
 }
 
+async function fetchOrderBlock15m(requestedSymbol=curSym){
+  try{
+    const data=await fetchBinanceKlines(requestedSymbol,'15m',300);
+    if(requestedSymbol!==curSym||(curInterval!=='30m'&&curInterval!=='4h'))return;
+    orderBlock15mCandles=data.map(d=>({time:+d[0],open:+d[1],high:+d[2],low:+d[3],close:+d[4],volume:+d[5]}));
+  }catch(e){console.error(e);}
+}
+
 async function fetchOrderBlock30m(requestedSymbol=curSym){
   try{
     const data=await fetchBinanceKlines(requestedSymbol,'30m',300);
@@ -1064,17 +1112,10 @@ async function fetchOrderBlock30m(requestedSymbol=curSym){
   }catch(e){console.error(e);}
 }
 
-async function fetchOrderBlock1h(requestedSymbol=curSym){
-  try{
-    const data=await fetchBinanceKlines(requestedSymbol,'1h',300);
-    if(requestedSymbol!==curSym||curInterval!=='4h')return;
-    orderBlock1hCandles=data.map(d=>({time:+d[0],open:+d[1],high:+d[2],low:+d[3],close:+d[4],volume:+d[5]}));
-  }catch(e){console.error(e);}
-}
 setInterval(()=>{
   if(!showOrderBlocks)return;
+  if(curInterval==='30m'||curInterval==='4h')fetchOrderBlock15m().then(drawAll);
   if(curInterval==='1h')fetchOrderBlock30m().then(drawAll);
-  if(curInterval==='4h')fetchOrderBlock1h().then(drawAll);
 },60000);
 
 function updateStats(){
@@ -1098,7 +1139,7 @@ function connectWS(){
     if(socket!==ws)return;
     const k=JSON.parse(e.data).k;
     markDataReceived();
-    const c={time:+k.t,open:+k.o,high:+k.h,low:+k.l,close:+k.c,volume:+k.v};
+    const c={time:+k.t,open:+k.o,high:+k.h,low:+k.l,close:+k.c,volume:+k.v,closed:k.x===true};
     if(candles.length&&candles[candles.length-1].time===c.time)candles[candles.length-1]=c;
     else{candles.push(c);if(candles.length>300)candles.shift();}
     updateStats();drawAll();
