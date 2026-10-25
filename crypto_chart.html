@@ -220,7 +220,7 @@ let showFractals=true;
 const FRACTAL_PERIODS=2;
 let showOrderBlocks=true;
 const OB_SWING_LENGTH=10,OB_MAX_ATR_MULT=3.5,OB_ZONE_COUNT=3;
-let orderBlock15mCandles=[],orderBlock30mCandles=[];
+let orderBlock15mCandles=[],orderBlock30mCandles=[],orderBlock1hCandles=[];
 let showVuManChu=false;
 const VUMANCHU_PERIOD=23,VUMANCHU_MULTIPLIER=2.5;
 let showPVBreakout=false;
@@ -695,8 +695,9 @@ function drawMain(){
     });
   }
   if(showOrderBlocks)drawOrderBlocks(ctx,calcOrderBlocks(candles,OB_SWING_LENGTH),{W,startIdx,n,xOf},yOf);
-  if(showOrderBlocks&&(curInterval==='30m'||curInterval==='4h')&&orderBlock15mCandles.length)drawOrderBlocks(ctx,calcOrderBlocks(orderBlock15mCandles,OB_SWING_LENGTH),{W,startIdx,n,xOf},yOf,'15분봉',true);
+  if(showOrderBlocks&&curInterval==='30m'&&orderBlock15mCandles.length)drawOrderBlocks(ctx,calcOrderBlocks(orderBlock15mCandles,OB_SWING_LENGTH),{W,startIdx,n,xOf},yOf,'15분봉',true);
   if(showOrderBlocks&&curInterval==='1h'&&orderBlock30mCandles.length)drawOrderBlocks(ctx,calcOrderBlocks(orderBlock30mCandles,OB_SWING_LENGTH),{W,startIdx,n,xOf},yOf,'30분봉',true);
+  if(showOrderBlocks&&(curInterval==='4h'||curInterval==='1d')&&orderBlock1hCandles.length)drawOrderBlocks(ctx,calcOrderBlocks(orderBlock1hCandles,OB_SWING_LENGTH),{W,startIdx,n,xOf},yOf,'1시간봉',true);
   if(pvBreakout)drawPVBreakoutBase(ctx,pvBreakout,{startIdx,n,xOf},yOf);
   MA_P.forEach(p=>{
     const vals=maLines[p];ctx.beginPath();ctx.strokeStyle=MA_C[p];ctx.lineWidth=MA_W[p];ctx.lineJoin='round';ctx.setLineDash([]);
@@ -1083,9 +1084,10 @@ async function fetchCandles(){
     candles=data.map(d=>({time:+d[0],open:+d[1],high:+d[2],low:+d[3],close:+d[4],volume:+d[5],closed:+d[6]<Date.now()}));
     chartStateMessage='';
     clearTimeout(candleRetryTimer);candleRetryTimer=null;
-    orderBlock15mCandles=[];orderBlock30mCandles=[];
-    if(requestedInterval==='30m'||requestedInterval==='4h')await fetchOrderBlock15m(requestedSymbol);
+    orderBlock15mCandles=[];orderBlock30mCandles=[];orderBlock1hCandles=[];
+    if(requestedInterval==='30m')await fetchOrderBlock15m(requestedSymbol);
     if(requestedInterval==='1h')await fetchOrderBlock30m(requestedSymbol);
+    if(requestedInterval==='4h'||requestedInterval==='1d')await fetchOrderBlock1h(requestedSymbol);
     markDataReceived();
     updateStats();
     drawAll();
@@ -1099,7 +1101,7 @@ async function fetchCandles(){
 async function fetchOrderBlock15m(requestedSymbol=curSym){
   try{
     const data=await fetchBinanceKlines(requestedSymbol,'15m',300);
-    if(requestedSymbol!==curSym||(curInterval!=='30m'&&curInterval!=='4h'))return;
+    if(requestedSymbol!==curSym||curInterval!=='30m')return;
     orderBlock15mCandles=data.map(d=>({time:+d[0],open:+d[1],high:+d[2],low:+d[3],close:+d[4],volume:+d[5]}));
   }catch(e){console.error(e);}
 }
@@ -1112,10 +1114,19 @@ async function fetchOrderBlock30m(requestedSymbol=curSym){
   }catch(e){console.error(e);}
 }
 
+async function fetchOrderBlock1h(requestedSymbol=curSym){
+  try{
+    const data=await fetchBinanceKlines(requestedSymbol,'1h',300);
+    if(requestedSymbol!==curSym||(curInterval!=='4h'&&curInterval!=='1d'))return;
+    orderBlock1hCandles=data.map(d=>({time:+d[0],open:+d[1],high:+d[2],low:+d[3],close:+d[4],volume:+d[5]}));
+  }catch(e){console.error(e);}
+}
+
 setInterval(()=>{
   if(!showOrderBlocks)return;
-  if(curInterval==='30m'||curInterval==='4h')fetchOrderBlock15m().then(drawAll);
+  if(curInterval==='30m')fetchOrderBlock15m().then(drawAll);
   if(curInterval==='1h')fetchOrderBlock30m().then(drawAll);
+  if(curInterval==='4h'||curInterval==='1d')fetchOrderBlock1h().then(drawAll);
 },60000);
 
 function updateStats(){
